@@ -1,6 +1,7 @@
 /* Organizer dashboard — Camille, Montreal Makers Collective. */
 
 const OS = { eventId: 'mile-end' }; // selected event on overview
+const BULK = new Set(); // applications selected for bulk actions
 let WZ = null; // create/edit event wizard draft
 
 Views.oHome = () => {
@@ -38,12 +39,23 @@ Views.oHome = () => {
         <div class="bar"><span style="width:${pct}%"></span></div>
         <div class="kv"><span>Pending pipeline</span><b>${money(st.pipeline)}</b></div>
         <div class="kv"><span>Event page views</span><b>${e.views.toLocaleString()}</b></div>
+        ${revenueByBooth(e)}
         <div class="row gap"><a class="btn sm btn-ghost" href="#/o/event/${e.id}/edit">${ic('edit')} Edit</a><a class="btn sm btn-ghost" href="#/o/group/${e.id}">${ic('msg')} Event group</a><a class="btn sm btn-ghost" href="#/event/${e.id}">Public page</a></div>
       </section>
     </div>
     <section class="panel"><div class="panel-head"><h2>My events</h2><a class="link" href="#/o/events">Manage</a></div>${orgEventRows(evs)}</section>
   `);
 };
+
+function revenueByBooth(e) {
+  const acc = Store.appsForEvent(e.id).filter((a) => a.status === 'accepted');
+  const rows = e.booths.map((b) => {
+    const qty = acc.reduce((n, a) => n + (a.selection[b.id] || 0), 0);
+    return { b, qty, rev: qty * b.price };
+  }).filter((r) => r.qty);
+  const max = Math.max(1, ...rows.map((r) => r.rev));
+  return rows.length ? `<h3>Estimated revenue by booth type</h3><div class="hbars">${rows.map((r) => `<div class="hbar"><span>${esc(r.b.name)} <em>×${r.qty}</em></span><div><i style="width:${(r.rev / max) * 100}%"></i></div><b>${money(r.rev)}</b></div>`).join('')}</div>` : '';
+}
 
 function boothSummary(a) {
   const ev = Store.event(a.eventId);
@@ -93,9 +105,13 @@ Views.oApplications = (params, eventId) => {
     <div class="tabs">${tab('all', 'All')}${tab('pending', 'Pending')}${tab('accepted', 'Accepted')}${tab('waitlisted', 'Waitlisted')}${tab('rejected', 'Rejected')}</div>
     <div class="review">
       <section class="panel review-list">
-        ${list.length ? list.map((a) => { const v = VENDORS[a.vendorId]; return `<a href="#/o/applications/${eventId}?${new URLSearchParams({ ...(s !== 'all' ? { s } : {}), app: a.id })}" class="rl ${sel && sel.id === a.id ? 'on' : ''}">
-          <img src="${IMG(v.photo, 100)}" alt=""/><div><b>${esc(v.name)}</b><span class="muted small">${esc(v.category)}</span></div>
-          <span class="rl-amt">${money(Store.appTotal(a))}</span>${pill(a.status)}</a>`; }).join('') : '<p class="muted">No applications with this status.</p>'}
+        <div class="bulk-bar ${BULK.size ? 'on' : ''}">
+          <label class="check"><input type="checkbox" data-change="bulk-all" ${list.length && list.every((a) => BULK.has(a.id)) ? 'checked' : ''}/> ${BULK.size ? `<b>${BULK.size} selected</b>` : 'Select all'}</label>
+          ${BULK.size ? `<div class="row gap-s"><button class="btn sm" data-act="bulk" data-s="accepted">Accept</button><button class="btn sm btn-ghost" data-act="bulk" data-s="waitlisted">Waitlist</button><button class="btn sm btn-ghost" data-act="bulk" data-s="rejected">Reject</button><button class="link-btn" data-act="bulk-clear">Clear</button></div>` : '<span class="tiny muted">Bulk actions</span>'}
+        </div>
+        ${list.length ? list.map((a) => { const v = VENDORS[a.vendorId]; return `<div class="rl-wrap"><input type="checkbox" data-change="bulk" data-id="${a.id}" ${BULK.has(a.id) ? 'checked' : ''} aria-label="Select ${esc(v.name)}"/><a href="#/o/applications/${eventId}?${new URLSearchParams({ ...(s !== 'all' ? { s } : {}), app: a.id })}" class="rl ${sel && sel.id === a.id ? 'on' : ''}">
+          <img src="${IMG(v.photo, 100)}" alt=""/><div><b>${esc(v.name)}</b><span class="muted small">${esc(v.category)} · ${boothSummary(a)}</span></div>
+          <span class="rl-amt">${money(Store.appTotal(a))}</span>${pill(a.status)}</a></div>`; }).join('') : '<p class="muted">No applications with this status.</p>'}
       </section>
       ${sel ? applicantDetail(sel) : ''}
     </div>`);

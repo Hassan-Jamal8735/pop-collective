@@ -36,6 +36,7 @@ const NEIGHBOURHOODS = {
 };
 
 const ORGANIZERS = {
+  'pc-team': { id: 'pc-team', name: 'POP/COLLECTIVE team', org: 'POP/COLLECTIVE (curated)', handle: '@popcollective', curated: true },
   'org-camille': { id: 'org-camille', name: 'Camille Tremblay', org: 'Montreal Makers Collective', handle: '@mtlmakerscollective', photo: PHOTOS.camille },
   'org-espace': { id: 'org-espace', name: 'Julien Roy', org: 'Espace Créatif', handle: '@espacecreatif' },
   'org-studio': { id: 'org-studio', name: 'Amira B.', org: 'Studio Collectif', handle: '@studiocollectif' },
@@ -156,7 +157,7 @@ const SEED_EVENTS = [
     booths: genericBooths(170), fields: ['name', 'description', 'category', 'photos'], questions: [],
   },
   {
-    id: 'verdun', title: 'Verdun Flea on Wellington', organizerId: 'org-sud', status: 'published', source: 'admin',
+    id: 'verdun', title: 'Verdun Flea on Wellington', organizerId: 'pc-team', status: 'published', source: 'admin',
     venue: 'Rue Wellington', address: 'Rue Wellington & 4e Av., Verdun, QC', neighbourhood: 'Verdun', lat: 45.4592, lng: -73.5703,
     date: '2027-07-18', start: '10:00', end: '17:00', categories: ['Vintage', 'Home'],
     img: PHOTOS.streetMarket, gallery: [PHOTOS.crowd], desc: 'A summer flea market along Wellington — furniture, records, vintage and home goods.',
@@ -182,6 +183,29 @@ const SEED_EVENTS = [
     schedule: [['10:00', 'Market opens'], ['16:00', 'Market closes']], deadline: '2027-03-01', views: 760,
     booths: genericBooths(130), fields: ['name', 'description', 'category', 'photos'], questions: [],
   },
+  // Organizer submissions awaiting POP/COLLECTIVE review (admin queue)
+  {
+    id: 'sub-vintage-me', title: 'Vintage Market — Mile-End', organizerId: 'org-sud', status: 'review', source: 'organizer', submittedAt: '2026-10-11T15:20:00Z',
+    venue: 'Le Livart', address: '3980 Saint-Denis, Montréal', neighbourhood: 'Mile End / Plateau', lat: 45.5206, lng: -73.5792,
+    date: '2027-06-07', start: '11:00', end: '17:00', categories: ['Vintage', 'Fashion'],
+    img: PHOTOS.flea, gallery: [], desc: 'Vintage clothing market at Le Livart.',
+    metro: 'Mont-Royal', parking: 'Street parking', access: '', pets: '', entry: 'Free entry', schedule: [], deadline: '2027-05-01', views: 0,
+    booths: genericBooths(200), fields: ['name', 'description', 'photos'], questions: [],
+  },
+  {
+    id: 'sub-griffin', title: 'Griffintown Design Fair', organizerId: 'org-studio', status: 'review', source: 'organizer', submittedAt: '2026-10-12T10:05:00Z',
+    venue: 'Théâtre Paradoxe courtyard', address: '5959 Bd Monk, Montréal, QC', neighbourhood: 'Griffintown', lat: 45.4945, lng: -73.5560,
+    date: '2027-10-02', start: '11:00', end: '18:00', categories: ['Design', 'Home', 'Art'],
+    img: PHOTOS.festival, gallery: [], desc: 'Independent furniture, lighting and object designers for one autumn weekend.',
+    metro: 'Lucien-L’Allier · 10 min walk', parking: 'Street parking', access: 'Wheelchair accessible', pets: 'Leashed dogs welcome', entry: 'Free entry',
+    schedule: [['11:00', 'Doors open'], ['18:00', 'Close']], deadline: '2027-08-15', views: 0,
+    booths: genericBooths(210), fields: ['name', 'description', 'category', 'photos'], questions: [],
+  },
+];
+
+const SEED_CLAIMS = [
+  { id: 'claim-verdun', eventId: 'verdun', orgId: 'org-sud', status: 'pending', at: '2026-10-10T18:40:00Z',
+    note: 'We have organized the Wellington flea since 2022 — happy to verify via our Instagram (@sudouestcollectif) and the borough permit.' },
 ];
 
 const ts = (d) => new Date(d).toISOString();

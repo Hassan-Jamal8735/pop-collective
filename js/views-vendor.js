@@ -80,7 +80,9 @@ Views.vEvent = (_, id) => {
         <div class="kv"><span>Expected visitors</span><b>${(e.views * 0.8).toFixed(0)}+</b></div>
         ${my ? `<div class="my-status">Your application ${pill(my.status)}</div><a class="btn block" href="#/v/application/${my.id}">View my application</a>
           ${my.status === 'accepted' ? `<a class="btn btn-ghost block" href="#/v/group/${e.id}">${ic('msg')} Open event group</a>` : ''}`
-        : `<a class="btn block" href="#/v/apply/${e.id}">Apply to this event</a>`}
+        : e.organizerId === 'pc-team'
+          ? `<div class="curated-note">${ic('sparkle')}<div><b>Curated listing</b><span class="small muted">POP/COLLECTIVE added this event; its organizer hasn't joined yet. Applications open once they claim the listing.</span></div></div><button class="btn block" data-act="notify-me">${ic('bell')} Notify me when applications open</button>`
+          : `<a class="btn block" href="#/v/apply/${e.id}">Apply to this event</a>`}
         <button class="btn btn-ghost block" data-act="toggle-save" data-id="${e.id}" data-role="vendor">${ic('bookmark')} ${saved ? 'Saved' : 'Save to favourites'}</button>
         <a class="link small" href="#/event/${e.id}">See public event page →</a>
       </aside>

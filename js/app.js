@@ -27,6 +27,9 @@ const ROUTES = [
   [/^\/o\/event\/([\w-]+)\/edit$/, Views.oWizard],
   [/^\/o\/applications\/([\w-]+)$/, Views.oApplications],
   [/^\/o\/group\/([\w-]+)$/, Views.oGroup],
+  [/^\/a$/, Views.aHome],
+  [/^\/a\/events$/, Views.aEvents],
+  [/^\/join\/(vendor|organizer)$/, Views.join],
 ];
 
 const EMBED = new URLSearchParams(location.search).has('embed');
@@ -39,7 +42,7 @@ function parseHash() {
   const [path, qs] = raw.split('?');
   return { path, params: new URLSearchParams(qs || '') };
 }
-const roleOf = (path) => (path.startsWith('/v') ? 'vendor' : path.startsWith('/o') ? 'organizer' : 'consumer');
+const roleOf = (path) => (path.startsWith('/v') ? 'vendor' : path.startsWith('/o') ? 'organizer' : path.startsWith('/a') ? 'admin' : 'consumer');
 const go = (hash) => { location.hash = hash; };
 
 function render() {
@@ -69,7 +72,7 @@ function renderDemoBar() {
   document.getElementById('demobar').innerHTML = `<div class="demobar">
     <span class="db-tag">Prototype</span>
     <div class="db-roles"><span class="db-label">View as</span>
-      ${r('consumer', '#/', 'Consumer', 'public site')}${r('vendor', '#/v', 'Vendor', 'Atelier Nord')}${r('organizer', '#/o', 'Organizer', 'Camille')}
+      ${r('consumer', '#/', 'Consumer', 'public site')}${r('vendor', '#/v', 'Vendor', 'Atelier Nord')}${r('organizer', '#/o', 'Organizer', 'Camille')}${r('admin', '#/a', 'Admin', 'POP team')}
     </div>
     <div class="db-tools">
       <button data-act="scenario" class="${scenarioOpen ? 'on' : ''}">${ic('play')}<span>Scenario</span></button>
@@ -124,7 +127,8 @@ const Actions = {
   },
   'share': () => { navigator.clipboard?.writeText(location.href); toast('Link copied to clipboard'); },
   'follow': (el) => { el.textContent = el.textContent === 'Following' ? 'Follow' : 'Following'; },
-  'choose-plan': (el) => toast(`${esc(el.dataset.plan)} selected — checkout is simulated in the prototype`),
+  'choose-plan': (el) => { const [kind, plan] = el.dataset.plan.split(' '); OB.plan = plan; go(`#/join/${kind}?step=1`); },
+  'notify-me': () => toast(`${ic('bell')} We'll let you know as soon as applications open`, 'good'),
   'fake-upload': () => toast('Upload simulated — photos are mock data in the prototype'),
   'read-notes': () => { Store.s.notifications.forEach((n) => { n.read = true; }); localStorage.setItem(STORE_KEY, JSON.stringify(Store.s)); },
 
@@ -163,6 +167,49 @@ const Actions = {
       modal(`<div class="doc-prev">${ic('file')}<h3>${esc(name)}</h3><p class="muted">Shared by ${esc(ORGANIZERS[e.organizerId].org)} · mock document preview</p><button class="btn" data-act="close-modal">${ic('download')} Download (simulated)</button></div>`);
     }
   },
+
+  // admin
+  'adm-publish': (el) => { const e = Store.event(el.dataset.id); e.status = 'published'; Store.save(); toast(`${ic('map')} <b>${esc(e.title)}</b> verified and live on the map`, 'good'); },
+  'adm-reject': (el) => { const e = Store.event(el.dataset.id); e.status = 'archived'; Store.save(); toast(`Submission declined — ${esc(ORGANIZERS[e.organizerId].org)} will be notified`); },
+  'adm-merge': (el) => {
+    const e = Store.event(el.dataset.id); const into = Store.event(el.dataset.into);
+    e.status = 'archived'; e.mergedInto = into.id;
+    Store.save();
+    toast(`Merged into <b>${esc(into.title)}</b> — no duplicate listing created`, 'good');
+  },
+  'adm-claim': (el) => {
+    const c = Store.s.claims.find((x) => x.id === el.dataset.id); c.status = el.dataset.s;
+    const e = Store.event(c.eventId);
+    if (c.status === 'approved') { e.organizerId = c.orgId; e.claimed = true; }
+    Store.save();
+    toast(c.status === 'approved' ? `<b>${esc(ORGANIZERS[c.orgId].org)}</b> now manages ${esc(e.title)} — same listing, now open to applications` : 'Claim declined', c.status === 'approved' ? 'good' : '');
+  },
+  'adm-new': () => go('#/o/event/new'),
+
+  // onboarding
+  'ob-yearly': (el) => { OB.yearly = el.dataset.y === '1'; render(); },
+  'ob-plan': (el) => { OB.plan = el.dataset.p; render(); },
+
+  // calendar + bulk review
+  'ics': (el) => {
+    const e = Store.event(el.dataset.id);
+    const d = e.date.replace(/-/g, ''); const t = (x) => x.replace(':', '') + '00';
+    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//POP COLLECTIVE//EN', 'BEGIN:VEVENT', `UID:${e.id}@popcollective`, `DTSTART;TZID=America/Toronto:${d}T${t(e.start)}`,
+      `DTEND;TZID=America/Toronto:${d}T${t(e.end)}`, `SUMMARY:${e.title}`, `LOCATION:${e.venue}, ${e.address}`, `DESCRIPTION:${e.desc.slice(0, 200)}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })); a.download = `${e.id}.ics`; a.click();
+    toast(`${ic('cal')} Added to your calendar`);
+  },
+  'bulk': (el) => {
+    const ids = [...BULK]; const s = el.dataset.s;
+    const before = Store.eventStats(Store.app(ids[0]).eventId).revenue;
+    ids.forEach((id) => { const a = Store.app(id); if (a.status !== s) { a.status = s; a.history.push({ status: s, at: new Date().toISOString() }); if (s === 'accepted') Store.group(a.eventId).posts.push({ id: 'p' + Date.now() + id, type: 'system', author: 'system', text: `${VENDORS[a.vendorId].name} joined the event group.`, at: new Date().toISOString() }); if (a.vendorId === ME_VENDOR) Store.s.notifications.unshift({ id: 'n' + Date.now(), to: 'vendor', text: `${Store.event(a.eventId).title}: your application is now ${s}.`, at: new Date().toISOString(), eventId: a.eventId }); } });
+    BULK.clear();
+    Store.save();
+    const after = Store.eventStats(Store.app(ids[0]).eventId).revenue;
+    toast(`${ids.length} application${ids.length > 1 ? 's' : ''} ${STATUS_LABEL[s].toLowerCase()}${after !== before ? ` · est. revenue ${money(after)}` : ''}`, 'good');
+  },
+  'bulk-clear': () => { BULK.clear(); render(); },
 
   // wizard
   'wz-cat': (el) => { const c = el.dataset.cat; WZ.categories = WZ.categories.includes(c) ? WZ.categories.filter((x) => x !== c) : [...WZ.categories, c]; el.classList.toggle('on'); },
@@ -234,12 +281,15 @@ document.addEventListener('change', (ev) => {
   if (k === 'os-event') { OS.eventId = el.value; render(); }
   if (k === 'oa-event') go(`#/o/applications/${el.value}`);
   if (k === 'org-group-ev') go(`#/o/group/${el.value}`);
+  if (k === 'bulk') { if (el.checked) BULK.add(el.dataset.id); else BULK.delete(el.dataset.id); render(); }
+  if (k === 'bulk-all') { document.querySelectorAll('[data-change="bulk"]').forEach((c) => { if (el.checked) BULK.add(c.dataset.id); else BULK.delete(c.dataset.id); }); render(); }
   if (k === 'wz-addon') { WZ.booths[el.dataset.i].addon = el.checked; render(); }
   if (k === 'wz-field') { const f = el.dataset.k; WZ.fields = el.checked ? [...WZ.fields, f] : WZ.fields.filter((x) => x !== f); }
 });
 
 /* ---------------- Forms ---------------- */
 const Submits = {
+  'ob-next': (f) => go(f.dataset.to),
   'hero-search': (f) => { DF.q = f.q.value; go('#/discover'); },
   'login': (f) => {
     Store.s.consumerUser = { name: f.name.value || 'Friend' };

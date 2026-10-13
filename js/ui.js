@@ -96,19 +96,49 @@ function modal(html, cls = '') {
 }
 const closeModal = () => { document.getElementById('modal-root').innerHTML = ''; };
 
-/* ---------- Leaflet map helper ---------- */
+/* ---------- Map helper: MapLibre GL + OpenFreeMap vector tiles (free, no API key) ---------- */
+const MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';
 const Maps = { instances: [] };
 function destroyMaps() { Maps.instances.forEach((m) => m.remove()); Maps.instances = []; }
-function pinIcon(active = false, label = '') {
-  return L.divIcon({ className: 'pc-pin-wrap', html: `<div class="pc-pin ${active ? 'active' : ''}">${label}</div>`, iconSize: [30, 38], iconAnchor: [15, 38], popupAnchor: [0, -34] });
+
+// Warm the neutral basemap toward the cream / terracotta brand palette.
+function tintMap(map) {
+  const css = getComputedStyle(document.documentElement);
+  const pale = css.getPropertyValue('--pale').trim();
+  const set = (id, prop, val) => { try { map.setPaintProperty(id, prop, val); } catch (e) { /* layer lacks prop */ } };
+  map.getStyle().layers.forEach((l) => {
+    const id = l.id;
+    if (l.type === 'background') set(id, 'background-color', '#F7F1E3');
+    else if (l.type === 'fill' && /water/.test(id)) set(id, 'fill-color', '#D9E3DF');
+    else if (l.type === 'fill' && /park|wood|grass|landcover|landuse/.test(id)) set(id, 'fill-color', pale || '#F1EBCB');
+    else if (l.type === 'fill' && /building/.test(id)) set(id, 'fill-color', '#EFE6D2');
+    else if (l.type === 'line' && /highway_major|highway_motorway|primary|trunk/.test(id)) set(id, 'line-color', '#F3D9C4');
+    else if (l.type === 'symbol') { set(id, 'text-color', '#6E5B4E'); set(id, 'text-halo-color', '#FBF6EA'); }
+  });
 }
+
 function makeMap(el, center = [45.515, -73.585], zoom = 12, opts = {}) {
-  const m = L.map(el, { zoomControl: true, scrollWheelZoom: opts.scroll ?? false, attributionControl: true }).setView(center, zoom);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors', maxZoom: 19,
-  }).addTo(m);
+  const m = new maplibregl.Map({
+    container: el, style: MAP_STYLE, center: [center[1], center[0]], zoom,
+    attributionControl: { compact: true }, cooperativeGestures: !!opts.cooperative,
+  });
+  m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+  if (!opts.scroll) m.scrollZoom.disable();
+  m.on('style.load', () => tintMap(m));
   Maps.instances.push(m);
   return m;
+}
+
+function addPin(map, lat, lng, { active = false, onClick, popup } = {}) {
+  const el = document.createElement('button');
+  el.className = 'pc-pin-wrap';
+  el.setAttribute('aria-label', 'Event marker');
+  el.innerHTML = `<span class="pc-pin ${active ? 'active' : ''}"></span>`;
+  const pin = el.firstChild;
+  const mk = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map);
+  if (popup) mk.setPopup(new maplibregl.Popup({ offset: 30, closeButton: false }).setHTML(popup));
+  if (onClick) el.addEventListener('click', (ev) => { ev.stopPropagation(); onClick(); });
+  return { remove: () => mk.remove(), setActive: (on) => { pin.classList.toggle('active', on); el.style.zIndex = on ? 5 : ''; }, marker: mk };
 }
 
 /* ---------- Layouts ---------- */
@@ -159,16 +189,23 @@ function dashLayout(role, active, content) {
     ['#/o/group/mile-end', 'msg', 'Event Groups', 'groups'],
     ['#/membership?tab=organizer', 'card', 'Membership', 'billing'],
   ];
-  const nav = role === 'vendor' ? vendorNav : orgNav;
-  const pend = role === 'organizer' ? Store.s.applications.filter((a) => a.status === 'pending' && Store.event(a.eventId).organizerId === ME_ORG).length : 0;
+  const adminNav = [
+    ['#/a', 'home', 'Review & claims', 'home'],
+    ['#/a/events', 'list', 'All events', 'events'],
+    ['#/discover?view=map', 'map', 'Public map', 'map'],
+  ];
+  const nav = role === 'vendor' ? vendorNav : role === 'admin' ? adminNav : orgNav;
+  const pend = role === 'admin' ? Store.s.events.filter((e) => e.status === 'review').length + Store.s.claims.filter((c) => c.status === 'pending').length
+    : role === 'organizer' ? Store.s.applications.filter((a) => a.status === 'pending' && Store.event(a.eventId).organizerId === ME_ORG).length : 0;
   const unread = role === 'vendor' ? Store.s.notifications.filter((n) => n.to === 'vendor' && !n.read).length : 0;
-  const who = role === 'vendor'
+  const who = role === 'admin' ? { name: 'POP/COLLECTIVE', sub: 'Team · admin', img: PHOTOS.tents }
+    : role === 'vendor'
     ? { name: 'Atelier Nord', sub: 'Vendor · Pro plan', img: VENDORS[ME_VENDOR].photo }
     : { name: 'Camille Tremblay', sub: 'Montreal Makers Collective', img: PHOTOS.camille };
   return `<div class="dash">
     <aside class="side">
       <a href="#/" class="side-logo">${wordmark('stacked')}</a>
-      <nav>${nav.map(([h, i, l, k]) => `<a href="${h}" class="${active === k ? 'on' : ''}">${ic(i)}<span>${l}</span>${k === 'applications' && pend ? `<b class="badge">${pend}</b>` : ''}${k === 'home' && unread ? `<b class="badge">${unread}</b>` : ''}</a>`).join('')}</nav>
+      <nav>${nav.map(([h, i, l, k]) => `<a href="${h}" class="${active === k ? 'on' : ''}">${ic(i)}<span>${l}</span>${(k === 'applications' || (role === 'admin' && k === 'home')) && pend ? `<b class="badge">${pend}</b>` : ''}${k === 'home' && unread ? `<b class="badge">${unread}</b>` : ''}</a>`).join('')}</nav>
       <div class="side-who"><img src="${IMG(who.img, 120)}" alt="" /><div><strong>${who.name}</strong><span>${who.sub}</span></div></div>
     </aside>
     <main class="dash-main">${content}</main>

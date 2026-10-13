@@ -28,6 +28,8 @@ Views.home = () => {
     </div>
   </section>
 
+  <div class="ticker" aria-hidden="true"><div class="ticker-in">${[0, 1].map(() => evs.map((e) => `<span>${esc(e.title)}</span><i>✶</i><span class="t-date">${fmtDate(e.date, { month: 'short', day: 'numeric' })}</span><i>✶</i>`).join('')).join('')}</div></div>
+
   <section class="paths">
     <a href="#/discover" class="path">
       <span class="path-n">01</span><h3>Discover events</h3><p>Find markets & pop-ups near you on the map. Free, no account needed.</p><span class="path-go">${ic('arrow')}</span>
@@ -43,6 +45,12 @@ Views.home = () => {
   <section class="section">
     <div class="sec-head"><h2 class="display">Coming up</h2><a href="#/discover" class="link">View all ${evs.length} events →</a></div>
     <div class="grid-cards">${featured.map((e) => eventCard(e)).join('')}</div>
+  </section>
+
+  <section class="section">
+    <div class="sec-head"><h2 class="display">By neighbourhood</h2><a href="#/discover?view=map" class="link">Open the map →</a></div>
+    <div class="hoods">${Object.keys(NEIGHBOURHOODS).map((n) => { const list = evs.filter((e) => e.neighbourhood === n); const cover = list[0]?.img || PHOTOS.cobble;
+      return `<a href="#/discover?hood=${encodeURIComponent(n)}" class="hood film"><img src="${IMG(cover, 500)}" alt="" loading="lazy"/><div><b>${esc(n)}</b><span>${list.length} event${list.length === 1 ? '' : 's'}</span></div></a>`; }).join('')}</div>
   </section>
 
   <section class="editorial">
@@ -131,8 +139,17 @@ function mountDiscover(role) {
   window.__discMap = map;
   window.__discRole = role;
   updateDiscover();
-  setTimeout(() => map.invalidateSize(), 50);
+  map.on('load', () => map.resize());
+  map.on('click', () => { DF.active = null; Object.values(discMarkers).forEach((m) => m.setActive(false)); document.getElementById('map-card').innerHTML = ''; });
 }
+
+// Hovering a card highlights its pin on the map.
+document.addEventListener('mouseover', (ev) => {
+  const card = ev.target.closest('.disc-results .ecard');
+  if (!card || !window.__discMap) return;
+  const id = card.querySelector('[data-id]')?.dataset.id;
+  Object.entries(discMarkers).forEach(([k, m]) => m.setActive(k === id || k === DF.active));
+});
 
 function updateDiscover() {
   const role = window.__discRole || 'consumer';
@@ -147,10 +164,20 @@ function updateDiscover() {
   Object.values(discMarkers).forEach((m) => m.remove());
   discMarkers = {};
   list.forEach((e) => {
-    const mk = L.marker([e.lat, e.lng], { icon: pinIcon(DF.active === e.id) }).addTo(map);
-    mk.on('click', () => { DF.active = e.id; showMapCard(e, role); Object.entries(discMarkers).forEach(([id, m]) => m.setIcon(pinIcon(id === e.id))); });
-    discMarkers[e.id] = mk;
+    discMarkers[e.id] = addPin(map, e.lat, e.lng, {
+      active: DF.active === e.id,
+      onClick: () => {
+        DF.active = e.id; showMapCard(e, role);
+        Object.entries(discMarkers).forEach(([id, m]) => m.setActive(id === e.id));
+        map.easeTo({ center: [e.lng, e.lat], zoom: Math.max(map.getZoom(), 13), duration: 600 });
+      },
+    });
   });
+  if (list.length > 1 && (DF.cats.length || DF.hood || DF.when || DF.q || DF.free)) {
+    const b = new maplibregl.LngLatBounds();
+    list.forEach((e) => b.extend([e.lng, e.lat]));
+    map.fitBounds(b, { padding: 70, maxZoom: 14, duration: 600 });
+  } else if (list.length === 1) map.easeTo({ center: [list[0].lng, list[0].lat], zoom: 14, duration: 600 });
   if (DF.active && list.find((e) => e.id === DF.active)) showMapCard(Store.event(DF.active), role);
   else document.getElementById('map-card').innerHTML = '';
 }
@@ -178,6 +205,7 @@ function applyDiscoverParams(params) {
   if (params.get('q') !== null) DF.q = params.get('q') || '';
   if (params.get('when')) DF.when = params.get('when');
   if (params.get('view')) DF.view = params.get('view');
+  if (params.get('hood')) DF.hood = params.get('hood');
 }
 
 /* ---------------- Event detail (consumer) ---------------- */
@@ -206,11 +234,12 @@ Views.event = (_, id) => {
           <button class="icon-btn lg ${saved ? 'on' : ''}" data-act="toggle-save" data-id="${e.id}" data-role="consumer" title="Save">${ic('heart')}</button>
           <button class="icon-btn lg" data-act="share" title="Share">${ic('share')}</button>
         </div>
-        ${e.source === 'admin' ? '<span class="eyebrow">Curated by POP/COLLECTIVE</span>' : '<span class="eyebrow">Organizer listing</span>'}
+        <span class="eyebrow">${e.organizerId === 'pc-team' ? 'Curated by POP/COLLECTIVE' : e.claimed ? 'Verified organizer · claimed listing' : e.source === 'admin' ? 'Curated by POP/COLLECTIVE' : 'Verified organizer'} · ${esc(e.neighbourhood)}</span>
         <h1 class="display-serif">${esc(e.title)}</h1>
         <p class="ev-meta">${ic('cal')} ${fmtLong(e.date)} · ${fmtTime(e.start)} – ${fmtTime(e.end)}</p>
         <p class="ev-meta">${ic('pin')} ${esc(e.venue)}, ${esc(e.address)}</p>
-        <a class="link" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(e.address)}">Get directions →</a>
+        <div class="row gap ev-links"><a class="btn sm" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(e.venue + ', ' + e.address)}">${ic('pin')} Get directions</a>
+          <button class="btn sm btn-ghost" data-act="ics" data-id="${e.id}">${ic('cal')} Add to calendar</button></div>
         ${tags(e.categories, 5)}
         <p class="ev-desc">${esc(e.desc)}</p>
         <div class="org-card">
@@ -241,8 +270,9 @@ Views.event = (_, id) => {
 Views.event.mount = (_, id) => {
   const e = Store.event(id);
   if (!e || !document.getElementById('ev-map')) return;
-  const m = makeMap('ev-map', [e.lat, e.lng], 15);
-  L.marker([e.lat, e.lng], { icon: pinIcon(true) }).addTo(m).bindPopup(`<b>${esc(e.venue)}</b><br/>${esc(e.metro)}`);
+  const m = makeMap('ev-map', [e.lat, e.lng], 15, { cooperative: true });
+  const pin = addPin(m, e.lat, e.lng, { active: true, popup: `<b>${esc(e.venue)}</b><br/>${esc(e.metro)}` });
+  m.on('load', () => pin.marker.togglePopup());
 };
 
 /* ---------------- Public vendor (maker) profile ---------------- */
@@ -304,8 +334,9 @@ function roleLanding(kind) {
       <h2 class="display-serif">${v ? 'Find markets. Meet communities. <em>Grow your brand.</em>' : 'Bring people, brands and <em>culture together.</em>'}</h2>
       <div class="role-points">${points.map(([i, t, d]) => `<div>${ic(i)}<h4>${t}</h4><p class="muted">${d}</p></div>`).join('')}</div>
       <div class="row gap">
-        <a class="btn" href="${v ? '#/v' : '#/o'}">${v ? 'Enter vendor dashboard' : 'Enter organizer dashboard'} <span class="tiny">(demo)</span></a>
-        <a class="btn btn-ghost" href="#/membership?tab=${kind}">See membership plans</a>
+        <a class="btn" href="#/join/${kind}">${ic('sparkle')} Create an account</a>
+        <a class="btn btn-ghost" href="${v ? '#/v' : '#/o'}">${v ? 'Vendor dashboard' : 'Organizer dashboard'} (demo)</a>
+        <a class="link" href="#/membership?tab=${kind}">See membership plans →</a>
       </div>
     </div>
   </section>
