@@ -46,6 +46,7 @@ Views.home = () => {
     <div class="sec-head"><h2 class="display">Coming up</h2><a href="#/discover" class="link">View all ${evs.length} events →</a></div>
     <div class="grid-cards">${featured.map((e) => eventCard(e)).join('')}</div>
   </section>
+  ${homeExtras()}
 
   <section class="section">
     <div class="sec-head"><h2 class="display">By neighbourhood</h2><a href="#/discover?view=map" class="link">Open the map →</a></div>
@@ -67,6 +68,7 @@ Views.home = () => {
       <a href="#/discover?view=map" class="btn">${ic('map')} Explore the map</a>
     </div>
   </section>
+  ${homeExtras2()}
   ${publicFooter()}`;
 };
 
@@ -228,7 +230,7 @@ Views.event = (_, id) => {
   <div class="wrap">
     <a href="#/discover" class="back">${ic('back')} Back to events</a>
     <div class="ev-top">
-      <div class="ev-gallery g${gallery.length}">${gallery.map((g, i) => film(g, i === 0 ? 1200 : 500, 'g' + i)).join('')}</div>
+      <div class="ev-gallery g${gallery.length}">${gallery.map((g, i) => `<button class="film g${i}" data-act="lightbox" data-ev="${e.id}" data-i="${i}"><img src="${IMG(g, i === 0 ? 1200 : 500)}" alt=""/>${i === gallery.length - 1 ? `<span class="g-more">${ic('grid')} View photos</span>` : ''}</button>`).join('')}</div>
       <div class="ev-head">
         <div class="ev-actions">
           <button class="icon-btn lg ${saved ? 'on' : ''}" data-act="toggle-save" data-id="${e.id}" data-role="consumer" title="Save">${ic('heart')}</button>
@@ -236,10 +238,12 @@ Views.event = (_, id) => {
         </div>
         <span class="eyebrow">${e.organizerId === 'pc-team' ? 'Curated by POP/COLLECTIVE' : e.claimed ? 'Verified organizer · claimed listing' : e.source === 'admin' ? 'Curated by POP/COLLECTIVE' : 'Verified organizer'} · ${esc(e.neighbourhood)}</span>
         <h1 class="display-serif">${esc(e.title)}</h1>
+        <div class="ev-badges">${daysUntil(e.date) > 0 ? `<span class="count-chip">${ic('clock')} In ${daysUntil(e.date)} days</span>` : ''}<span class="count-chip soft">${ic('users')} ${interestedCount(e)} interested</span>${/free/i.test(e.entry) ? '<span class="count-chip soft">Free entry</span>' : ''}</div>
         <p class="ev-meta">${ic('cal')} ${fmtLong(e.date)} · ${fmtTime(e.start)} – ${fmtTime(e.end)}</p>
         <p class="ev-meta">${ic('pin')} ${esc(e.venue)}, ${esc(e.address)}</p>
         <div class="row gap ev-links"><a class="btn sm" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(e.venue + ', ' + e.address)}">${ic('pin')} Get directions</a>
-          <button class="btn sm btn-ghost" data-act="ics" data-id="${e.id}">${ic('cal')} Add to calendar</button></div>
+          <button class="btn sm btn-ghost" data-act="ics" data-id="${e.id}">${ic('cal')} Add to calendar</button>
+          <button class="btn sm btn-ghost ${(Store.s.interested || {})[e.id] ? 'cur' : ''}" data-act="interested" data-id="${e.id}">${ic('sparkle')} ${(Store.s.interested || {})[e.id] ? "You're going" : "I'm going"}</button></div>
         ${tags(e.categories, 5)}
         <p class="ev-desc">${esc(e.desc)}</p>
         <div class="org-card">
@@ -261,9 +265,11 @@ Views.event = (_, id) => {
     </div>
 
     <div class="sec-head"><h2 class="h2">Vendors at this event <span class="muted">(${vendors.length})</span></h2></div>
-    ${vendors.length ? `<div class="vendor-grid">${vendors.map((v) => `<a href="#/maker/${v.id}" class="vcard ${v.id === ME_VENDOR ? 'just' : ''}">
+    ${vendors.length > 1 ? `<div class="chips vf">${['All', ...new Set(vendors.map((v) => v.category.split(' / ')[0]))].map((c, i) => `<button class="chip ${i ? '' : 'on'}" data-act="vf" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}
+    ${vendors.length ? `<div class="vendor-grid">${vendors.map((v) => `<a href="#/maker/${v.id}" data-cat="${esc(v.category.split(' / ')[0])}" class="vcard ${v.id === ME_VENDOR ? 'just' : ''}">
       ${film(v.photo, 400)}<strong>${esc(v.name)}</strong><span class="muted small">${esc(v.category)}</span><span class="tiny muted">${esc(v.handle)}</span></a>`).join('')}</div>`
       : `<p class="muted">The vendor list will be announced soon.</p>`}
+    ${eventNearby(e)}
   </div>
   ${publicFooter()}`;
 };
@@ -285,12 +291,12 @@ Views.maker = (_, id) => {
   const upcoming = Store.s.applications.filter((a) => a.vendorId === id && a.status === 'accepted').map((a) => Store.event(a.eventId)).filter((e) => e.status === 'published');
   return `${publicHeader()}
   <div class="wrap">
-    <a href="javascript:history.back()" class="back">${ic('back')} Back</a>
+    <a href="#/makers" class="back">${ic('back')} All makers</a>
     <div class="maker">
       <div class="maker-id">
         <img class="maker-av" src="${IMG(v.photo, 300)}" alt="" />
         <div><h1 class="display-serif">${esc(v.name)}</h1><p class="muted">${esc(isMe ? p.category : v.category)} · Montréal, QC</p><p class="small">${esc(v.handle)}${v.site ? ' · ' + esc(v.site) : ''}</p></div>
-        <button class="btn sm" data-act="follow">Follow</button>
+        <div class="maker-follow"><span class="muted small"><b>${(id.length * 37) % 900 + 120 + (isFollowing(id) ? 1 : 0)}</b> followers</span>${followBtn(id)}</div>
       </div>
       <div class="maker-body">
         <div><h3>About the brand</h3><p>${esc(isMe ? p.description : v.bio)}</p>
@@ -305,14 +311,19 @@ Views.maker = (_, id) => {
 };
 
 /* ---------------- Saved (simulated login) ---------------- */
-Views.saved = () => {
+Views.saved = (params) => {
   const u = Store.s.consumerUser;
+  const tab = params?.get('tab') || 'events';
   const evs = Store.s.savedConsumer.map((id) => Store.event(id)).filter(Boolean);
+  const mk = (Store.s.followed || []).map((id) => VENDORS[id]).filter(Boolean);
   return `${publicHeader('saved')}
-  <section class="page-head"><h1 class="display">Saved</h1><p class="lead">${u ? `Your favourite markets, ${esc(u.name)}.` : 'Save events with a free account and get reminders before they happen.'}</p></section>
+  <section class="page-head"><h1 class="display">Saved</h1><p class="lead">${u ? `Your markets and makers, ${esc(u.name)}.` : 'Save events and follow makers with a free account.'}</p></section>
   <section class="section tight">
     ${!u ? `<div class="cta-card">${ic('bookmark')}<div><h3>Create a free account to keep your list</h3><p class="muted">Discovery is always free. An account just remembers your favourites.</p></div><button class="btn" data-act="login">Create free account</button></div>` : ''}
-    ${evs.length ? `<div class="grid-cards">${evs.map((e) => eventCard(e)).join('')}</div>` : emptyState('heart', 'Nothing saved yet', 'Tap the heart on any event to save it here.', '<a class="btn" href="#/discover">Discover events</a>')}
+    <div class="tabs"><a href="#/saved" class="${tab === 'events' ? 'on' : ''}">Events (${evs.length})</a><a href="#/saved?tab=makers" class="${tab === 'makers' ? 'on' : ''}">Makers you follow (${mk.length})</a></div>
+    ${tab === 'events'
+      ? (evs.length ? `<div class="grid-cards">${evs.map((e) => eventCard(e)).join('')}</div>` : emptyState('heart', 'Nothing saved yet', 'Tap the heart on any event to save it here.', '<a class="btn" href="#/discover">Discover events</a>'))
+      : (mk.length ? `<div class="maker-grid">${mk.map(makerCard).join('')}</div>` : emptyState('users', 'Not following anyone yet', 'Follow makers to know where they pop up next.', '<a class="btn" href="#/makers">Browse makers</a>'))}
   </section>
   ${publicFooter()}`;
 };

@@ -27,6 +27,7 @@ const Store = {
   load() {
     try { this.s = JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { this.s = null; }
     if (!this.s || !this.s.events) this.s = seedState();
+    this.s = { followed: [], interested: {}, cityVotes: {}, newsletter: false, ...this.s };
   },
   save() {
     localStorage.setItem(STORE_KEY, JSON.stringify(this.s));

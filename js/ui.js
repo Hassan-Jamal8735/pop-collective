@@ -91,7 +91,7 @@ function toast(html, kind = '') {
 
 function modal(html, cls = '') {
   const root = document.getElementById('modal-root');
-  root.innerHTML = `<div class="modal-back" data-act="close-modal"><div class="modal ${cls}" onclick="event.stopPropagation()">
+  root.innerHTML = `<div class="modal-back" data-act="close-modal"><div class="modal ${cls}">
     <button class="modal-x" data-act="close-modal" aria-label="Close">${ic('x')}</button>${html}</div></div>`;
 }
 const closeModal = () => { document.getElementById('modal-root').innerHTML = ''; };
@@ -149,13 +149,18 @@ function publicHeader(active = '') {
     <a href="#/" class="logo-link">${wordmark()}</a>
     <nav class="pub-nav">
       ${link('#/discover', 'Discover', 'discover')}
+      ${link('#/makers', 'Makers', 'makers')}
+      ${link('#/journal', 'Journal', 'journal')}
+      ${link('#/about', 'About', 'about')}
+      <span class="nav-sep"></span>
       ${link('#/for-vendors', 'For Vendors', 'vendors')}
       ${link('#/for-organizers', 'For Organizers', 'organizers')}
-      ${link('#/brand', 'Brand', 'brand')}
     </nav>
     <div class="pub-actions">
+      <button class="search-btn" data-act="search" title="Search (press /)">${ic('search')}<span>Search</span><kbd>/</kbd></button>
       <a href="#/saved" class="icon-btn" title="Saved events">${ic('heart')}<span class="count">${Store.s.savedConsumer.length}</span></a>
       ${u ? `<button class="chip-user" data-act="logout">${ic('user')} ${esc(u.name)}</button>` : `<button class="btn btn-ghost sm" data-act="login">Log in</button>`}
+      <button class="icon-btn menu-btn" data-act="menu" aria-label="Menu">${ic('list')}</button>
     </div>
   </header>`;
 }
@@ -164,9 +169,11 @@ function publicFooter() {
   return `<footer class="pub-foot">
     <div class="foot-mark">${wordmark('inline', 'xl')}</div>
     <div class="foot-cols">
-      <div><h4>Discover</h4><a href="#/discover">All events</a><a href="#/discover?view=map">Map</a><a href="#/saved">Saved</a></div>
+      <div><h4>Discover</h4><a href="#/discover">All events</a><a href="#/discover?view=map">Map</a><a href="#/makers">Makers</a><a href="#/saved">Saved</a></div>
+      <div><h4>Read</h4><a href="#/journal">The journal</a><a href="#/about">About</a><a href="#/about">FAQ</a><a href="#/brand">Brand</a></div>
       <div><h4>Join</h4><a href="#/for-vendors">For vendors</a><a href="#/for-organizers">For organizers</a><a href="#/membership">Membership</a></div>
-      <div><h4>Montréal first</h4><p class="muted">Small brands, big communities. Made with love in Tiohtià:ke / Montréal.</p></div>
+      <div><h4>Montréal first</h4><p class="muted">Small brands, big communities. Made with love in Tiohtià:ke / Montréal.</p>
+        <div class="socials"><span>Instagram</span><span>TikTok</span><span>Newsletter</span></div></div>
     </div>
     <p class="tiny muted">Prototype · fictional data · © 2026 POP/COLLECTIVE</p>
   </footer>`;

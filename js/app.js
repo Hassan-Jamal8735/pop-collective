@@ -10,6 +10,10 @@ const ROUTES = [
   [/^\/for-organizers$/, Views.forOrganizers],
   [/^\/membership$/, Views.membership],
   [/^\/brand$/, Views.brand],
+  [/^\/makers$/, Views.makers],
+  [/^\/journal$/, Views.journal],
+  [/^\/journal\/([\w-]+)$/, Views.article],
+  [/^\/about$/, Views.about],
   [/^\/v$/, Views.vHome],
   [/^\/v\/discover$/, Views.vDiscover],
   [/^\/v\/event\/([\w-]+)$/, Views.vEvent],
@@ -36,6 +40,7 @@ const EMBED = new URLSearchParams(location.search).has('embed');
 let lastPath = null;
 let scenarioOpen = false;
 let pendingSave = null;
+let pendingFollow = null;
 
 function parseHash() {
   const raw = location.hash.replace(/^#/, '') || '/';
@@ -109,7 +114,7 @@ const Actions = {
   'palette': (el) => { Store.s.palette = el.dataset.p; applyPalette(); Store.save(); toast(`Palette ${el.dataset.p.toUpperCase()} — ${el.dataset.p === 'b' ? 'Orange & Cream' : 'Chocolate & Butter'}`); },
   'mobile': () => modal(`<div class="mob-prev"><div class="phone big"><iframe src="?embed=1${location.hash}" title="Mobile preview"></iframe></div><p class="tiny muted center">Live 390px preview — fully clickable</p></div>`, 'modal-phone'),
   'reset': () => { if (confirm('Reset all demo data to the starting scenario?')) { Store.reset(); WZ = null; AP.eventId = null; applyPalette(); toast('Demo data reset'); go('#/'); render(); } },
-  'close-modal': () => closeModal(),
+  'close-modal': (el, ev) => { if (el.classList.contains('modal-back') && ev.target !== el) return; closeModal(); },
 
   'login': () => modal(`<div class="login">${wordmark('stacked')}<h2 class="h1">Save your favourite events</h2><p class="muted">Free account — discovery is always free. (Simulated login)</p>
     <form data-submit="login"><label class="field"><span>First name</span><input name="name" value="Léa" required/></label><label class="field"><span>Email</span><input name="email" value="lea@example.com" type="email"/></label>
@@ -126,7 +131,45 @@ const Actions = {
     toast(i >= 0 ? 'Removed from saved' : `${ic('heart')} Saved — ${esc(Store.event(id).title)}`);
   },
   'share': () => { navigator.clipboard?.writeText(location.href); toast('Link copied to clipboard'); },
-  'follow': (el) => { el.textContent = el.textContent === 'Following' ? 'Follow' : 'Following'; },
+  'follow': (el) => {
+    const id = el.dataset.id;
+    if (!Store.s.consumerUser) { pendingFollow = id; Actions.login(); return; }
+    const f = Store.s.followed; const i = f.indexOf(id);
+    if (i >= 0) f.splice(i, 1); else f.push(id);
+    Store.save();
+    toast(i >= 0 ? `Unfollowed ${esc(VENDORS[id].name)}` : `${ic('check')} Following <b>${esc(VENDORS[id].name)}</b> — we'll tell you where they pop up next`, i >= 0 ? '' : 'good');
+  },
+  'search': () => openSearch(),
+  'menu': () => openMenu(),
+  'close-modal-nav': () => { closeModal(); },
+  'how': (el) => {
+    document.querySelectorAll('[data-act="how"]').forEach((b) => b.classList.toggle('on', b === el));
+    document.querySelectorAll('[data-how]').forEach((d) => d.classList.toggle('on', d.dataset.how === el.dataset.k));
+  },
+  'mf-cat': (el) => { MF.cat = el.dataset.cat; document.querySelectorAll('[data-act="mf-cat"]').forEach((b) => b.classList.toggle('on', b === el)); updateMakers(); },
+  'vf': (el) => {
+    const c = el.dataset.cat;
+    document.querySelectorAll('[data-act="vf"]').forEach((b) => b.classList.toggle('on', b === el));
+    document.querySelectorAll('.vendor-grid .vcard').forEach((v) => { v.style.display = c === 'All' || v.dataset.cat === c ? '' : 'none'; });
+  },
+  'vote': (el) => {
+    const c = el.dataset.city; Store.s.cityVotes = Store.s.cityVotes[c] ? {} : { [c]: true };
+    Store.save(); if (Store.s.cityVotes[c]) toast(`${ic('check')} Vote counted for ${esc(c)}`, 'good');
+  },
+  'interested': (el) => {
+    const id = el.dataset.id; const m = Store.s.interested;
+    m[id] = !m[id]; Store.save();
+    if (m[id]) toast(`${ic('sparkle')} See you there! We'll remind you the day before.`, 'good');
+  },
+  'lightbox': (el) => {
+    const e = Store.event(el.dataset.ev); const pics = [e.img, ...e.gallery];
+    let i = Number(el.dataset.i);
+    const show = () => {
+      modal(`<div class="lightbox"><img src="${IMG(pics[i], 1600)}" alt=""/><div class="lb-bar"><button data-act="lb" data-d="-1">${ic('back')}</button><span>${i + 1} / ${pics.length} · ${esc(e.title)}</span><button data-act="lb" data-d="1">${ic('arrow')}</button></div></div>`, 'modal-lightbox');
+    };
+    Actions.lb = (b) => { i = (i + Number(b.dataset.d) + pics.length) % pics.length; show(); };
+    show();
+  },
   'choose-plan': (el) => { const [kind, plan] = el.dataset.plan.split(' '); OB.plan = plan; go(`#/join/${kind}?step=1`); },
   'notify-me': () => toast(`${ic('bell')} We'll let you know as soon as applications open`, 'good'),
   'fake-upload': () => toast('Upload simulated — photos are mock data in the prototype'),
@@ -251,6 +294,7 @@ const Actions = {
 document.addEventListener('click', (ev) => {
   const el = ev.target.closest('[data-act]');
   if (!el) return;
+  if (el.classList.contains('modal-back') && ev.target !== el) return; // clicks inside modal content
   const fn = Actions[el.dataset.act];
   if (!fn) return;
   if (el.tagName !== 'A' || el.dataset.act === 'toggle-save') ev.preventDefault();
@@ -262,6 +306,8 @@ document.addEventListener('click', (ev) => {
 document.addEventListener('input', (ev) => {
   const el = ev.target;
   if (el.dataset.input === 'df-q') { DF.q = el.value; updateDiscover(); }
+  if (el.dataset.input === 'mf-q') { MF.q = el.value; updateMakers(); }
+  if (el.dataset.input === 'gsearch') document.getElementById('gs-results').innerHTML = searchResults(el.value);
   if (el.dataset.ap) AP[el.dataset.ap] = el.value;
   if (el.dataset.apq) AP.answers[el.dataset.apq] = el.value;
   if (el.dataset.wz && WZ) WZ[el.dataset.wz] = el.value;
@@ -289,12 +335,14 @@ document.addEventListener('change', (ev) => {
 
 /* ---------------- Forms ---------------- */
 const Submits = {
+  'newsletter': () => { Store.s.newsletter = true; Store.save(); toast(`${ic('check')} Subscribed to The Weekend Edit`, 'good'); },
   'ob-next': (f) => go(f.dataset.to),
   'hero-search': (f) => { DF.q = f.q.value; go('#/discover'); },
   'login': (f) => {
     Store.s.consumerUser = { name: f.name.value || 'Friend' };
     if (pendingSave && !Store.s.savedConsumer.includes(pendingSave)) Store.s.savedConsumer.push(pendingSave);
-    pendingSave = null;
+    if (pendingFollow && !Store.s.followed.includes(pendingFollow)) Store.s.followed.push(pendingFollow);
+    pendingSave = null; pendingFollow = null;
     closeModal(); Store.save(); toast(`Welcome, ${esc(Store.s.consumerUser.name)}! Your favourites are saved.`, 'good');
   },
   'submit-application': () => {
@@ -343,5 +391,9 @@ if (EMBED) document.body.classList.add('embed');
 Store.onChange(render);
 window.addEventListener('hashchange', render);
 window.addEventListener('storage', (e) => { if (e.key === STORE_KEY) { Store.load(); applyPalette(); render(); } });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+  const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName);
+  if (!typing && (e.key === '/' || ((e.ctrlKey || e.metaKey) && e.key === 'k')) && !roleOf(parseHash().path).match(/vendor|organizer|admin/)) { e.preventDefault(); openSearch(); }
+});
 render();
