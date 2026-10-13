@@ -177,3 +177,33 @@ blockquote.pull cite { display: block; font: 600 14px var(--f-ui); font-style: n
   .pub-actions .btn.sm { display: none; }
   .foot-cols { grid-template-columns: 1fr; }
 }
+
+/* ---------- Logo: pin + awning symbol with Titan One wordmark ---------- */
+.mark-pin { fill: var(--mark, var(--brand)); }
+.mark-cut { fill: var(--mark-cut, var(--cream)); }
+.wm { display: inline-flex; flex-direction: row; align-items: center; gap: .3em; font-family: 'Titan One', var(--f-display); font-weight: 400; letter-spacing: 0; font-size: 22px; line-height: .86; white-space: nowrap; }
+.wm .mark { height: 1.9em; width: auto; flex: none; }
+.wm-text { display: flex; flex-direction: column; font-size: .8em; }
+.wm-stacked { flex-direction: column; text-align: center; gap: .22em; }
+.wm-stacked .wm-text { align-items: center; }
+.wm.xl { font-size: clamp(30px, 4vw, 46px); }
+.mark.xl { height: 130px; width: auto; }
+.pub-foot .wm, .flyer-in .wm, .ob-logo .wm, .logo-tile.photo .wm { --mark: var(--cream); --mark-cut: var(--dark); color: var(--cream); }
+.logo-tile.brand { --mark: var(--cream); --mark-cut: var(--brand); color: var(--cream); }
+html[data-palette="a"] .logo-tile.brand { --mark-cut: var(--brand); }
+.logo-tile.wide { grid-column: span 2; }
+.app-icon { width: 96px; height: 96px; border-radius: 26px; background: var(--brand); display: inline-grid; place-items: center; --mark: var(--cream); --mark-cut: var(--brand); box-shadow: var(--shadow); }
+.app-icon.dark { background: #2E1F1A; --mark-cut: #2E1F1A; }
+.app-icon .mark { height: 64px; }
+
+.logo-tile .wm-stacked.xl { font-size: clamp(26px, 3vw, 36px); margin-top: -18px; }
+.logo-tile .app-icon + .app-icon { margin-left: 14px; }
+.logo-tile:has(.app-icon) { flex-direction: row; }
+
+/* Hero: symbol + stacked wordmark set into the photo */
+.hero-wordmark { flex-direction: row; align-items: flex-end; gap: .12em; font-family: 'Titan One', var(--f-display); font-weight: 400; letter-spacing: 0; font-size: clamp(40px, 5.7vw, 100px); line-height: .84; --mark: var(--cream); --mark-cut: var(--dark); }
+.hero-wordmark .hero-mark { height: 1.62em; width: auto; flex: none; filter: drop-shadow(0 4px 18px rgba(40, 15, 5, .25)); }
+.hw-text { display: flex; flex-direction: column; }
+.side-logo .wm { font-size: 19px; }
+.mmenu .wm, .login .wm { font-size: 26px; }
+@media (max-width: 640px) { .hero-wordmark { font-size: 13vw; } .logo-tile.wide { grid-column: span 1; } }

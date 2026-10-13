@@ -55,9 +55,28 @@ const ICONS = {
 };
 const ic = (name, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ''}</svg>`;
 
-const wordmark = (variant = 'inline', cls = '') => variant === 'stacked'
-  ? `<span class="wm wm-stacked ${cls}"><span>POP//</span><span>COLLECTIVE</span></span>`
-  : `<span class="wm ${cls}">POP<i>/</i>COLLECTIVE</span>`;
+// Brand symbol: a map pin with a striped market awning — "find the next pop-up".
+function awningPath() {
+  const top = { y: 19, x0: 31, x1: 69 }, bot = { y: 46, x0: 15, x1: 85 }, gap = 3.4, n = 4;
+  let d = '';
+  for (let i = 0; i < n; i++) {
+    const tl = top.x0 + ((top.x1 - top.x0) / n) * i + (i ? gap / 2 : 0);
+    const tr = top.x0 + ((top.x1 - top.x0) / n) * (i + 1) - (i < n - 1 ? gap / 2 : 0);
+    const bl = bot.x0 + ((bot.x1 - bot.x0) / n) * i + (i ? gap / 2 : 0);
+    const br = bot.x0 + ((bot.x1 - bot.x0) / n) * (i + 1) - (i < n - 1 ? gap / 2 : 0);
+    const r = (br - bl) / 2;
+    d += `M${tl} ${top.y}L${tr} ${top.y}L${br} ${bot.y}A${r} ${r * 0.7} 0 0 1 ${bl} ${bot.y}Z`;
+  }
+  return d;
+}
+const MARK_SVG = `<svg class="mark" viewBox="0 0 100 120" aria-hidden="true">
+  <path class="mark-pin" d="M50 4C26.5 4 8 21.6 8 44.5 8 70 33 94 50 116 67 94 92 70 92 44.5 92 21.6 73.5 4 50 4Z"/>
+  <g class="mark-cut"><path d="${awningPath()}"/><path d="M46.5 54h7V86a3.5 3.5 0 0 1-7 0Z"/></g>
+</svg>`;
+const logoMark = (cls = '') => MARK_SVG.replace('class="mark"', `class="mark ${cls}"`);
+
+const wordmark = (variant = 'inline', cls = '') =>
+  `<span class="wm wm-${variant} ${cls}" aria-label="POP/COLLECTIVE">${logoMark()}<span class="wm-text"><span>POP/</span><span>COLLECTIVE</span></span></span>`;
 
 const STATUS_LABEL = { pending: 'Pending', accepted: 'Accepted', waitlisted: 'Waitlisted', rejected: 'Rejected', published: 'Published', draft: 'Draft', withdrawn: 'Withdrawn' };
 const pill = (status) => `<span class="pill pill-${status}">${STATUS_LABEL[status] || status}</span>`;

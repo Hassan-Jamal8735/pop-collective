@@ -12,7 +12,7 @@ Views.home = () => {
       <img src="${IMG(PHOTOS.hero, 2000)}" alt="Shoppers browsing a tree-shaded outdoor market" />
       <span class="hero-stamp">'27 6 7</span>
       <span class="hero-frame">PORTRA 400 · 12A</span>
-      <h1 class="hero-wordmark" aria-label="POP/COLLECTIVE"><span>POP<i>/</i></span><span>COLLECTIVE</span></h1>
+      <h1 class="hero-wordmark" aria-label="POP/COLLECTIVE">${logoMark('hero-mark')}<span class="hw-text"><span>POP/</span><span>COLLECTIVE</span></span></h1>
     </div>
     <div class="hero-side">
       <p class="eyebrow">Montréal · Markets · Pop-ups · Makers</p>
@@ -385,14 +385,17 @@ Views.membership = (params) => {
 Views.brand = () => {
   const sw = (n, h, light) => `<div class="sw" style="background:${h};color:${light ? '#3D2D2E' : '#FCF8EC'}"><b>${n}</b><span>${h}</span></div>`;
   return `${publicHeader('brand')}
-  <section class="page-head"><p class="eyebrow">Brand / UI direction</p><h1 class="display">Nostalgic in feeling.<br/>Contemporary in function.</h1></section>
+  <section class="page-head"><p class="eyebrow">Brand / UI direction</p><h1 class="display">Nostalgic in feeling.<br/>Contemporary in function.</h1><p class="lead">The symbol is a map pin carrying a striped market awning — <em>find the next pop-up</em>. It ties together the three sides of the platform: makers under the awning, organizers who raise it, and the people who find it on the map.</p></section>
   <section class="section tight">
     <h2 class="h2">Logo treatments</h2>
     <div class="logo-grid">
-      <div class="logo-tile cream">${wordmark('inline', 'xl')}<span class="tiny muted">Primary · inline</span></div>
-      <div class="logo-tile brand">${wordmark('stacked', 'xl')}<span class="tiny">Alternate · stacked “POP//”</span></div>
-      <div class="logo-tile photo film"><img src="${IMG(PHOTOS.tents, 900)}" alt="" />${wordmark('stacked', 'xl')}<span class="tiny">Over photography</span></div>
-      <div class="logo-tile cream"><span class="wm-mono">P/C</span><span class="tiny muted">Monogram · app icon & stamps</span></div>
+      <div class="logo-tile cream">${logoMark('xl')}<span class="tiny muted">Symbol · cream</span></div>
+      <div class="logo-tile brand">${logoMark('xl')}<span class="tiny">Symbol · burnt orange</span></div>
+      <div class="logo-tile cream wide">${wordmark('inline', 'xl')}<span class="tiny muted">Horizontal wordmark</span></div>
+      <div class="logo-tile brand wide">${wordmark('inline', 'xl')}<span class="tiny">Horizontal · reversed</span></div>
+      <div class="logo-tile cream">${wordmark('stacked', 'xl')}<span class="tiny muted">Stacked wordmark</span></div>
+      <div class="logo-tile cream"><span class="app-icon">${logoMark()}</span><span class="app-icon dark">${logoMark()}</span><span class="tiny muted">App icon · colour & one colour</span></div>
+      <div class="logo-tile photo film wide"><img src="${IMG(PHOTOS.hero, 1200)}" alt="" />${wordmark('stacked', 'xl')}<span class="tiny">Over photography</span></div>
     </div>
 
     <h2 class="h2">Colour palettes</h2>
