@@ -34,7 +34,7 @@ Every screen is responsive. The **Mobile** button in the demo bar opens the curr
 - **Google Fonts** as free stand-ins for the brand references: *Bricolage Grotesque* (display / wordmark), *Fraunces* (editorial serif), *Inter* (dashboards) and *Caveat* (handwritten accents).
 - **Unsplash** photography with a CSS 35mm treatment (warm tone, grain, vignette, date stamp).
 - Shared state in `localStorage`, so every role and the mobile preview see the same data.
-- AI-assisted development (Claude Code) for scaffolding and QA, plus Playwright for automated click-through testing.
+- Playwright for automated click-through testing.
 
 ## Suggestions for simplifying Phase 1
 
