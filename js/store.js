@@ -27,13 +27,15 @@ const Store = {
   load() {
     try { this.s = JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { this.s = null; }
     if (!this.s || !this.s.events) this.s = seedState();
-    this.s = { followed: [], interested: {}, cityVotes: {}, newsletter: false, ...this.s };
+    this.s = { followed: [], interested: {}, cityVotes: {}, newsletter: false, plans: { vendor: 'Pro', organizer: 'Pro' }, accounts: {}, orgProfile: null, interests: { cats: [], hoods: [] }, done: {}, ...this.s };
+    if (this.s.orgProfile) Object.assign(ORGANIZERS[ME_ORG], { org: this.s.orgProfile.name, handle: this.s.orgProfile.instagram || ORGANIZERS[ME_ORG].handle });
   },
   save() {
     localStorage.setItem(STORE_KEY, JSON.stringify(this.s));
     this.listeners.forEach((fn) => fn());
   },
   reset() {
+    Object.assign(ORGANIZERS[ME_ORG], { org: 'Montreal Makers Collective', handle: '@mtlmakerscollective' });
     this.s = seedState();
     this.save();
   },

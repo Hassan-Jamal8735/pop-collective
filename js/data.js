@@ -59,7 +59,7 @@ const VENDORS = {
   'v-petit': { id: 'v-petit', name: 'Le Petit Studio', category: 'Art & Prints', handle: '@lepetitstudio', photo: 'photo-1764777313307-ecfd2eb20990', bio: 'Risograph prints and illustrated goods.' },
   'v-backyard': { id: 'v-backyard', name: 'Café Backyard', category: 'Food & Drinks', handle: '@cafebackyard', photo: PHOTOS.barista, bio: 'Pour-overs and pastries on wheels.' },
   'v-bloom': { id: 'v-bloom', name: 'Bloom Atelier', category: 'Flowers', handle: '@bloomatelier', photo: 'photo-1775027488494-e0255ec83c9b', bio: 'Dried and seasonal flower arrangements.' },
-  'v-north': { id: 'v-north', name: 'North of Here', category: 'Wellness', handle: '@northofhere', photo: 'photo-1613068431228-8cb6a1e92573', bio: 'Botanical body care made in Montréal.' },
+  'v-north': { id: 'v-north', name: 'North of Here', category: 'Wellness', handle: '@northofhere', photo: 'photo-1613068431228-8cb6a1e92573', bio: 'Botanical body care made in Montreal.' },
 };
 
 const STANDARD_FIELDS = [
@@ -80,10 +80,10 @@ const genericBooths = (base = 150) => [
 const SEED_EVENTS = [
   {
     id: 'mile-end', title: 'Mile End Vintage Market', organizerId: 'org-camille', status: 'published', source: 'organizer',
-    venue: 'Le Livart', address: '3980 Rue Saint-Denis, Montréal, QC', neighbourhood: 'Mile End / Plateau', lat: 45.5207, lng: -73.5790,
+    venue: 'Le Livart', address: '3980 Rue Saint-Denis, Montreal, QC', neighbourhood: 'Mile End / Plateau', lat: 45.5207, lng: -73.5790,
     date: '2027-06-07', start: '11:00', end: '17:00', categories: ['Vintage', 'Fashion', 'Handmade'],
     img: PHOTOS.rackStreet, gallery: [PHOTOS.flea, 'photo-1540221652346-e5dd6b50f3e7', PHOTOS.hero, 'photo-1647664856968-880b8eccd588'],
-    desc: 'A curated vintage market inside the rooms and courtyard of Le Livart — archival fashion, denim, records and handmade goods from 60 independent Montréal sellers. Come dig, try on, and stay for the DJ set in the courtyard.',
+    desc: 'A curated vintage market inside the rooms and courtyard of Le Livart — archival fashion, denim, records and handmade goods from 60 independent Montreal sellers. Come dig, try on, and stay for the DJ set in the courtyard.',
     metro: 'Mont-Royal (Orange line) · 8 min walk', parking: 'Paid street parking on Saint-Denis & Rachel · BIXI station at the corner', access: 'Ground floor & courtyard are wheelchair accessible', pets: 'Leashed dogs welcome in the courtyard', entry: 'Free entry',
     schedule: [['11:00', 'Market opens'], ['13:00', 'Vintage styling session'], ['15:00', 'DJ set in the courtyard'], ['17:00', 'Market closes']],
     deadline: '2027-04-30', views: 3412,
@@ -103,7 +103,7 @@ const SEED_EVENTS = [
   },
   {
     id: 'printemps', title: 'Printemps Local', organizerId: 'org-camille', status: 'published', source: 'organizer',
-    venue: 'Parc La Fontaine', address: '3933 Av. du Parc-La Fontaine, Montréal, QC', neighbourhood: 'Plateau-Mont-Royal', lat: 45.5270, lng: -73.5690,
+    venue: 'Parc La Fontaine', address: '3933 Av. du Parc-La Fontaine, Montreal, QC', neighbourhood: 'Plateau-Mont-Royal', lat: 45.5270, lng: -73.5690,
     date: '2027-05-16', start: '10:00', end: '16:00', categories: ['Food & Drinks', 'Wellness', 'Handmade'],
     img: PHOTOS.park, gallery: [PHOTOS.flowersBrowse, PHOTOS.barista, PHOTOS.tents],
     desc: 'The first outdoor market of the season: flowers, coffee, body care and handmade goods under the trees of Parc La Fontaine.',
@@ -114,15 +114,15 @@ const SEED_EVENTS = [
   },
   {
     id: 'winter-popup', title: 'Winter Pop-Up', organizerId: 'org-camille', status: 'draft', source: 'organizer',
-    venue: 'Le Livart', address: '3980 Rue Saint-Denis, Montréal, QC', neighbourhood: 'Mile End / Plateau', lat: 45.5207, lng: -73.5790,
+    venue: 'Le Livart', address: '3980 Rue Saint-Denis, Montreal, QC', neighbourhood: 'Mile End / Plateau', lat: 45.5207, lng: -73.5790,
     date: '2027-01-23', start: '12:00', end: '18:00', categories: ['Fashion', 'Art'],
-    img: PHOTOS.indoor, gallery: [], desc: 'An indoor winter edition — cozy, warm, and full of makers.',
+    img: PHOTOS.indoor, gallery: [], desc: 'An indoor winter edition — cozy, warm, and full of independent brands.',
     metro: 'Mont-Royal (Orange line) · 8 min walk', parking: 'Paid street parking', access: 'Ground floor accessible', pets: 'No pets indoors', entry: 'Free entry',
     schedule: [], deadline: '2026-12-15', views: 0, booths: genericBooths(180), fields: ['name', 'description', 'category', 'photos'], questions: [],
   },
   {
     id: 'fetes', title: 'Le Marché des Fêtes', organizerId: 'org-espace', status: 'published', source: 'admin',
-    venue: 'Marché Bonsecours', address: '350 Rue Saint-Paul E, Montréal, QC', neighbourhood: 'Old Montreal', lat: 45.5089, lng: -73.5517,
+    venue: 'Marché Bonsecours', address: '350 Rue Saint-Paul E, Montreal, QC', neighbourhood: 'Old Montreal', lat: 45.5089, lng: -73.5517,
     date: '2026-12-05', start: '10:00', end: '18:00', categories: ['Handmade', 'Food & Drinks', 'Home'],
     img: PHOTOS.indoor, gallery: [PHOTOS.cobble, PHOTOS.nightBun], desc: 'A holiday market of creators, designers and local artisans under the dome of Marché Bonsecours.',
     metro: 'Champ-de-Mars (Orange line) · 7 min walk', parking: 'Indigo lot on Rue Saint-Paul · street parking', access: 'Elevator access to all floors', pets: 'No pets indoors', entry: 'Free entry',
@@ -131,27 +131,27 @@ const SEED_EVENTS = [
   },
   {
     id: 'sommet', title: 'Sommet Créatif', organizerId: 'org-studio', status: 'published', source: 'admin',
-    venue: 'Arsenal', address: '2020 Rue William, Montréal, QC', neighbourhood: 'Griffintown', lat: 45.4906, lng: -73.5626,
+    venue: 'Arsenal', address: '2020 Rue William, Montreal, QC', neighbourhood: 'Griffintown', lat: 45.4906, lng: -73.5626,
     date: '2027-08-21', start: '11:00', end: '19:00', categories: ['Design', 'Art', 'Home'],
-    img: PHOTOS.overpass, gallery: [PHOTOS.festival], desc: 'Design objects, prints and furniture from Montréal studios in a former shipyard.',
+    img: PHOTOS.overpass, gallery: [PHOTOS.festival], desc: 'Design objects, prints and furniture from Montreal studios in a former shipyard.',
     metro: 'Georges-Vanier (Orange line) · 12 min walk', parking: 'On-site paid parking', access: 'Wheelchair accessible', pets: 'Leashed dogs welcome', entry: '$5 suggested donation',
     schedule: [['11:00', 'Doors open'], ['16:00', 'Designer talk'], ['19:00', 'Close']], deadline: '2027-06-01', views: 2210,
     booths: genericBooths(190), fields: ['name', 'description', 'category', 'social', 'photos'], questions: [],
   },
   {
     id: 'plateau', title: 'Marché du Plateau', organizerId: 'org-plateau', status: 'published', source: 'admin',
-    venue: 'Avenue Duluth', address: 'Av. Duluth E & Rue Saint-Hubert, Montréal, QC', neighbourhood: 'Plateau-Mont-Royal', lat: 45.5185, lng: -73.5770,
+    venue: 'Avenue Duluth', address: 'Av. Duluth E & Rue Saint-Hubert, Montreal, QC', neighbourhood: 'Plateau-Mont-Royal', lat: 45.5185, lng: -73.5770,
     date: '2027-07-11', start: '10:00', end: '17:00', categories: ['Art', 'Handmade', 'Jewelry'],
-    img: PHOTOS.tents, gallery: [PHOTOS.streetMarket], desc: 'A pedestrian street market of illustrators, jewelers and small-batch makers.',
+    img: PHOTOS.tents, gallery: [PHOTOS.streetMarket], desc: 'A pedestrian street market of illustrators, jewelers and small-batch brands.',
     metro: 'Mont-Royal (Orange line) · 10 min walk', parking: 'Street parking (limited)', access: 'Street level', pets: 'Leashed dogs welcome', entry: 'Free entry',
     schedule: [['10:00', 'Market opens'], ['17:00', 'Market closes']], deadline: '2027-05-15', views: 1890,
     booths: genericBooths(140), fields: ['name', 'description', 'category', 'photos'], questions: [],
   },
   {
     id: 'nocturne', title: 'Petite-Italie Night Market', organizerId: 'org-nocturne', status: 'published', source: 'admin',
-    venue: 'Marché Jean-Talon', address: '7070 Av. Henri-Julien, Montréal, QC', neighbourhood: 'Little Italy', lat: 45.5363, lng: -73.6147,
+    venue: 'Marché Jean-Talon', address: '7070 Av. Henri-Julien, Montreal, QC', neighbourhood: 'Little Italy', lat: 45.5363, lng: -73.6147,
     date: '2027-06-25', start: '17:00', end: '23:00', categories: ['Food & Drinks', 'Art'],
-    img: PHOTOS.nightBun, gallery: [PHOTOS.festival], desc: 'Street food, natural wine and late-night makers under the lights of Jean-Talon.',
+    img: PHOTOS.nightBun, gallery: [PHOTOS.festival], desc: 'Street food, natural wine and late-night vendors under the lights of Jean-Talon.',
     metro: 'Jean-Talon (Orange & Blue) · 4 min walk', parking: 'Jean-Talon market parking', access: 'Street level', pets: 'Leashed dogs welcome', entry: 'Free entry',
     schedule: [['17:00', 'Market opens'], ['20:00', 'Live band'], ['23:00', 'Close']], deadline: '2027-05-01', views: 4020,
     booths: genericBooths(170), fields: ['name', 'description', 'category', 'photos'], questions: [],
@@ -167,16 +167,16 @@ const SEED_EVENTS = [
   },
   {
     id: 'st-henri', title: 'Saint-Henri Makers Day', organizerId: 'org-sud', status: 'published', source: 'organizer',
-    venue: 'Marché Atwater', address: '138 Av. Atwater, Montréal, QC', neighbourhood: 'Saint-Henri', lat: 45.4801, lng: -73.5770,
+    venue: 'Marché Atwater', address: '138 Av. Atwater, Montreal, QC', neighbourhood: 'Saint-Henri', lat: 45.4801, lng: -73.5770,
     date: '2027-09-12', start: '10:00', end: '16:00', categories: ['Handmade', 'Food & Drinks', 'Art'],
-    img: PHOTOS.flowersBrowse, gallery: [PHOTOS.flowerAwning], desc: 'Makers set up along the canal beside Marché Atwater.',
+    img: PHOTOS.flowersBrowse, gallery: [PHOTOS.flowerAwning], desc: 'Vendors set up along the canal beside Marché Atwater.',
     metro: 'Lionel-Groulx (Green & Orange) · 6 min walk', parking: 'Atwater market parking', access: 'Wheelchair accessible', pets: 'Leashed dogs welcome', entry: 'Free entry',
     schedule: [['10:00', 'Market opens'], ['16:00', 'Market closes']], deadline: '2027-07-15', views: 980,
     booths: genericBooths(150), fields: ['name', 'description', 'category', 'photos'], questions: [],
   },
   {
     id: 'rosemont', title: 'Fleurs & Céramique', organizerId: 'org-plateau', status: 'published', source: 'admin',
-    venue: 'Parc Molson', address: 'Rue Beaubien E & 1re Av., Montréal, QC', neighbourhood: 'Rosemont', lat: 45.5418, lng: -73.5878,
+    venue: 'Parc Molson', address: 'Rue Beaubien E & 1re Av., Montreal, QC', neighbourhood: 'Rosemont', lat: 45.5418, lng: -73.5878,
     date: '2027-04-24', start: '10:00', end: '16:00', categories: ['Home', 'Wellness', 'Art'],
     img: PHOTOS.flowerAwning, gallery: [], desc: 'Spring flowers and ceramics in Parc Molson.',
     metro: 'Beaubien (Orange line) · 5 min walk', parking: 'Street parking', access: 'Paved paths', pets: 'Leashed dogs welcome', entry: 'Free entry',
@@ -186,7 +186,7 @@ const SEED_EVENTS = [
   // Organizer submissions awaiting POP/COLLECTIVE review (admin queue)
   {
     id: 'sub-vintage-me', title: 'Vintage Market — Mile-End', organizerId: 'org-sud', status: 'review', source: 'organizer', submittedAt: '2026-10-11T15:20:00Z',
-    venue: 'Le Livart', address: '3980 Saint-Denis, Montréal', neighbourhood: 'Mile End / Plateau', lat: 45.5206, lng: -73.5792,
+    venue: 'Le Livart', address: '3980 Saint-Denis, Montreal', neighbourhood: 'Mile End / Plateau', lat: 45.5206, lng: -73.5792,
     date: '2027-06-07', start: '11:00', end: '17:00', categories: ['Vintage', 'Fashion'],
     img: PHOTOS.flea, gallery: [], desc: 'Vintage clothing market at Le Livart.',
     metro: 'Mont-Royal', parking: 'Street parking', access: '', pets: '', entry: 'Free entry', schedule: [], deadline: '2027-05-01', views: 0,
@@ -194,7 +194,7 @@ const SEED_EVENTS = [
   },
   {
     id: 'sub-griffin', title: 'Griffintown Design Fair', organizerId: 'org-studio', status: 'review', source: 'organizer', submittedAt: '2026-10-12T10:05:00Z',
-    venue: 'Théâtre Paradoxe courtyard', address: '5959 Bd Monk, Montréal, QC', neighbourhood: 'Griffintown', lat: 45.4945, lng: -73.5560,
+    venue: 'Théâtre Paradoxe courtyard', address: '5959 Bd Monk, Montreal, QC', neighbourhood: 'Griffintown', lat: 45.4945, lng: -73.5560,
     date: '2027-10-02', start: '11:00', end: '18:00', categories: ['Design', 'Home', 'Art'],
     img: PHOTOS.festival, gallery: [], desc: 'Independent furniture, lighting and object designers for one autumn weekend.',
     metro: 'Lucien-L’Allier · 10 min walk', parking: 'Street parking', access: 'Wheelchair accessible', pets: 'Leashed dogs welcome', entry: 'Free entry',
@@ -246,7 +246,7 @@ const SEED_GROUPS = {
     ],
   },
   'printemps': { posts: [{ id: 'p1', type: 'announcement', author: 'org', text: 'Booth map coming in March. Thanks for joining Printemps Local!', at: ts('2026-10-04T09:00') }], files: [] },
-  'fetes': { posts: [{ id: 'p1', type: 'announcement', author: 'org', text: 'Bienvenue! Indoor tables and 2 chairs are provided for every booth.', at: ts('2026-09-20T09:00') }], files: [{ id: 'f1', name: 'Marche_des_Fetes_Poster.pdf', size: '3.1 MB', kind: 'flyer' }] },
+  'fetes': { posts: [{ id: 'p1', type: 'announcement', author: 'org', text: 'Welcome! Indoor tables and 2 chairs are provided for every booth.', at: ts('2026-09-20T09:00') }], files: [{ id: 'f1', name: 'Marche_des_Fetes_Poster.pdf', size: '3.1 MB', kind: 'flyer' }] },
 };
 
 const SEED_PROFILE = {

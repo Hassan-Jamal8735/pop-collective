@@ -38,7 +38,6 @@ const ROUTES = [
 
 const EMBED = new URLSearchParams(location.search).has('embed');
 let lastPath = null;
-let scenarioOpen = false;
 let pendingSave = null;
 let pendingFollow = null;
 
@@ -64,45 +63,29 @@ function render() {
   const feed = document.getElementById('feed');
   if (feed) feed.scrollTop = feed.scrollHeight;
   renderDemoBar();
+  Tour.afterRender();
+  Tour.check();
 }
 
-/* ---------------- Demo bar + guided scenario ---------------- */
+/* ---------------- Demo bar ---------------- */
 function renderDemoBar() {
   if (EMBED) return;
   const role = roleOf(parseHash().path);
-  const nord = Store.myAppFor('mile-end');
-  const st = Store.eventStats('mile-end');
   const r = (k, href, label, sub) => `<a href="${href}" class="${role === k ? 'on' : ''}">${label}<small>${sub}</small></a>`;
-  const done = nord && nord.status === 'accepted';
   document.getElementById('demobar').innerHTML = `<div class="demobar">
     <span class="db-tag">Prototype</span>
     <div class="db-roles"><span class="db-label">View as</span>
-      ${r('consumer', '#/', 'Consumer', 'public site')}${r('vendor', '#/v', 'Vendor', 'Atelier Nord')}${r('organizer', '#/o', 'Organizer', 'Camille')}${r('admin', '#/a', 'Admin', 'POP team')}
+      ${r('consumer', '#/', 'Consumer', 'public site')}${r('vendor', '#/v', 'Vendor', 'Atelier Nord')}${r('organizer', '#/o', 'Organizer', 'Camille')}${r('admin', '#/a', 'Admin', 'POP/COLLECTIVE team')}
     </div>
     <div class="db-tools">
-      <button data-act="scenario" class="${scenarioOpen ? 'on' : ''}">${ic('play')}<span>Scenario</span></button>
+      <button data-act="tour-start" data-id="scenario" class="db-main">${ic('play')}<span>Scenario</span></button>
+      <button data-act="tours-menu">${ic('sparkle')}<span>Tours</span></button>
+      <button data-act="brief">${ic('check')}<span>Brief checklist</span></button>
       <button data-act="palette" data-p="${Store.s.palette === 'b' ? 'a' : 'b'}" title="Switch colour palette"><i class="dot-pal"></i><span>Palette ${Store.s.palette.toUpperCase()}</span></button>
       <button data-act="mobile" title="Mobile preview">${ic('phone')}<span>Mobile</span></button>
       <button data-act="reset" title="Reset demo data">${ic('refresh')}<span>Reset</span></button>
     </div>
-  </div>
-  ${scenarioOpen ? `<div class="scenario">
-    <div class="sc-head"><b>Connected scenario</b><button data-act="scenario">${ic('x')}</button></div>
-    <p class="small muted">Mile End Vintage Market · Le Livart · June 7, 2027</p>
-    <div class="sc-live">
-      <div><span>Atelier Nord</span>${pill(nord ? nord.status : 'pending')}</div>
-      <div><span>Est. revenue</span><b>${money(st.revenue)}</b></div>
-      <div><span>Accepted</span><b>${st.accepted}</b></div>
-    </div>
-    <ol>
-      <li class="${role === 'vendor' ? 'here' : ''}"><a href="#/v/application/app-nord-mileend"><b>Vendor</b> — Atelier Nord's application: 6-ft table + 2 racks = $300, <em>Pending</em>; event group locked.</a></li>
-      <li class="${role === 'organizer' ? 'here' : ''}"><a href="#/o/applications/mile-end?app=app-nord-mileend"><b>Organizer</b> — Camille reviews and clicks <em>Accept</em>.</a></li>
-      <li class="${done ? '' : 'dim'}"><a href="#/o"><b>Organizer</b> — totals & estimated revenue update (+$300).</a></li>
-      <li class="${done ? '' : 'dim'}"><a href="#/v/group/mile-end"><b>Vendor</b> — status <em>Accepted</em>; event group unlocks: announcements, messages, flyer & files.</a></li>
-      <li class="${done ? '' : 'dim'}"><a href="#/event/mile-end"><b>Consumer</b> — Atelier Nord now appears on the public event page.</a></li>
-    </ol>
-    <p class="tiny muted">No money changes hands. Use Reset to replay.</p>
-  </div>` : ''}`;
+  </div>`;
 }
 
 /* ---------------- Palette ---------------- */
@@ -110,7 +93,6 @@ function applyPalette() { document.documentElement.dataset.palette = Store.s.pal
 
 /* ---------------- Click actions ---------------- */
 const Actions = {
-  'scenario': () => { scenarioOpen = !scenarioOpen; renderDemoBar(); },
   'palette': (el) => { Store.s.palette = el.dataset.p; applyPalette(); Store.save(); toast(`Palette ${el.dataset.p.toUpperCase()} — ${el.dataset.p === 'b' ? 'Orange & Cream' : 'Chocolate & Butter'}`); },
   'mobile': () => modal(`<div class="mob-prev"><div class="phone big"><iframe src="?embed=1${location.hash}" title="Mobile preview"></iframe></div><p class="tiny muted center">Live 390px preview — fully clickable</p></div>`, 'modal-phone'),
   'reset': () => { if (confirm('Reset all demo data to the starting scenario?')) { Store.reset(); WZ = null; AP.eventId = null; applyPalette(); toast('Demo data reset'); go('#/'); render(); } },
@@ -140,6 +122,7 @@ const Actions = {
     toast(i >= 0 ? `Unfollowed ${esc(VENDORS[id].name)}` : `${ic('check')} Following <b>${esc(VENDORS[id].name)}</b> — we'll tell you where they pop up next`, i >= 0 ? '' : 'good');
   },
   'search': () => openSearch(),
+  'notifs': (el) => { openNotifs(el.dataset.role); if (el.dataset.role === 'vendor') { Store.s.notifications.forEach((n) => { n.read = true; }); localStorage.setItem(STORE_KEY, JSON.stringify(Store.s)); } },
   'menu': () => openMenu(),
   'close-modal-nav': () => { closeModal(); },
   'how': (el) => {
@@ -170,7 +153,7 @@ const Actions = {
     Actions.lb = (b) => { i = (i + Number(b.dataset.d) + pics.length) % pics.length; show(); };
     show();
   },
-  'choose-plan': (el) => { const [kind, plan] = el.dataset.plan.split(' '); OB.plan = plan; go(`#/join/${kind}?step=1`); },
+  'choose-plan': (el) => { const [kind, plan] = el.dataset.plan.split(' '); OB.plan = plan; go(`#/join/${kind}?step=${Store.s.accounts[kind] ? 2 : 1}`); },
   'notify-me': () => toast(`${ic('bell')} We'll let you know as soon as applications open`, 'good'),
   'fake-upload': () => toast('Upload simulated — photos are mock data in the prototype'),
   'read-notes': () => { Store.s.notifications.forEach((n) => { n.read = true; }); localStorage.setItem(STORE_KEY, JSON.stringify(Store.s)); },
@@ -195,6 +178,7 @@ const Actions = {
     const a = Store.app(el.dataset.id); const s = el.dataset.s;
     if (a.status === s) return;
     const before = Store.eventStats(a.eventId).revenue;
+    Store.s.done.reviewed = true;
     Store.setStatus(a.id, s);
     const after = Store.eventStats(a.eventId).revenue;
     const v = VENDORS[a.vendorId];
@@ -248,6 +232,7 @@ const Actions = {
     const before = Store.eventStats(Store.app(ids[0]).eventId).revenue;
     ids.forEach((id) => { const a = Store.app(id); if (a.status !== s) { a.status = s; a.history.push({ status: s, at: new Date().toISOString() }); if (s === 'accepted') Store.group(a.eventId).posts.push({ id: 'p' + Date.now() + id, type: 'system', author: 'system', text: `${VENDORS[a.vendorId].name} joined the event group.`, at: new Date().toISOString() }); if (a.vendorId === ME_VENDOR) Store.s.notifications.unshift({ id: 'n' + Date.now(), to: 'vendor', text: `${Store.event(a.eventId).title}: your application is now ${s}.`, at: new Date().toISOString(), eventId: a.eventId }); } });
     BULK.clear();
+    Store.s.done.reviewed = true;
     Store.save();
     const after = Store.eventStats(Store.app(ids[0]).eventId).revenue;
     toast(`${ids.length} application${ids.length > 1 ? 's' : ''} ${STATUS_LABEL[s].toLowerCase()}${after !== before ? ` · est. revenue ${money(after)}` : ''}`, 'good');
@@ -276,7 +261,7 @@ const Actions = {
         organizerId: ME_ORG, source: 'organizer', lat: lat + (Math.random() - 0.5) * 0.006, lng: lng + (Math.random() - 0.5) * 0.006,
         gallery: [], views: 0, access: 'Details coming soon', pets: 'Ask the organizer', entry: 'Free entry',
         metro: data.metro || 'Details coming soon', parking: data.parking || 'Details coming soon',
-        address: data.address || 'Montréal, QC', venue: data.venue || 'Venue TBD', desc: data.desc || '',
+        address: data.address || 'Montreal, QC', venue: data.venue || 'Venue TBD', desc: data.desc || '',
         schedule: [[data.start, 'Market opens'], [data.end, 'Market closes']],
       });
       Store.s.events.push(data);
@@ -285,6 +270,7 @@ const Actions = {
       Store.s.events[i] = { ...Store.s.events[i], ...data };
     }
     WZ = null;
+    if (status === 'published') Store.s.done.published = true;
     Store.save();
     toast(status === 'published' ? `${ic('map')} <b>${esc(data.title)}</b> is live on the public map` : `<b>${esc(data.title)}</b> saved as draft`, 'good');
     go(status === 'published' ? `#/event/${data.id}` : '#/o/events');
@@ -312,7 +298,7 @@ document.addEventListener('input', (ev) => {
   if (el.dataset.apq) AP.answers[el.dataset.apq] = el.value;
   if (el.dataset.wz && WZ) WZ[el.dataset.wz] = el.value;
   if (el.dataset.wzb && WZ) { const [i, f] = el.dataset.wzb.split(':'); WZ.booths[i][f] = f === 'price' ? Number(el.value) : el.value; }
-  if (el.dataset.wzq && WZ) WZ.questions[el.dataset.wzq].label = el.value;
+  if (el.dataset.wzq && WZ) { WZ.questions[el.dataset.wzq].label = el.value; const fp = document.getElementById('fp-q' + el.dataset.wzq); if (fp) fp.textContent = el.value || 'Untitled question'; }
 });
 
 document.addEventListener('change', (ev) => {
@@ -330,7 +316,7 @@ document.addEventListener('change', (ev) => {
   if (k === 'bulk') { if (el.checked) BULK.add(el.dataset.id); else BULK.delete(el.dataset.id); render(); }
   if (k === 'bulk-all') { document.querySelectorAll('[data-change="bulk"]').forEach((c) => { if (el.checked) BULK.add(c.dataset.id); else BULK.delete(c.dataset.id); }); render(); }
   if (k === 'wz-addon') { WZ.booths[el.dataset.i].addon = el.checked; render(); }
-  if (k === 'wz-field') { const f = el.dataset.k; WZ.fields = el.checked ? [...WZ.fields, f] : WZ.fields.filter((x) => x !== f); }
+  if (k === 'wz-field') { const f = el.dataset.k; WZ.fields = el.checked ? [...WZ.fields, f] : WZ.fields.filter((x) => x !== f); render(); }
 });
 
 /* ---------------- Forms ---------------- */
@@ -354,6 +340,7 @@ const Submits = {
       answers: { ...AP.answers }, message: AP.message, history: [{ status: 'pending', at: new Date().toISOString() }],
     };
     Store.s.applications.push(app);
+    Store.s.done.applied = true;
     if (AP.updateProfile) {
       const p = Store.s.profile;
       ['description', 'category', 'social', 'previous'].forEach((k) => { if (AP[k]) p[k] = AP[k]; });
@@ -367,16 +354,22 @@ const Submits = {
     const p = Store.s.profile; const d = new FormData(f);
     ['description', 'category', 'social', 'previous'].forEach((k) => { p[k] = d.get(k); });
     p.answers.era = d.get('a_era'); p.answers.price = d.get('a_price'); p.answers.notes = d.get('a_notes');
+    Store.s.done.vendorProfile = true; Store.s.done.answers = true;
     Store.save(); toast('Profile saved — future applications will use it', 'good');
   },
   'post': (f) => {
     const text = f.text.value.trim(); if (!text) return;
     const role = f.dataset.role;
+    if (role === 'organizer' && f.type.value === 'announcement') Store.s.done.announced = true;
     Store.group(f.dataset.ev).posts.push({ id: 'p' + Date.now(), type: role === 'organizer' ? f.type.value : 'message', author: role === 'organizer' ? 'org' : ME_VENDOR, text, at: new Date().toISOString() });
     Store.save();
     const feed = document.getElementById('feed'); if (feed) feed.scrollTop = feed.scrollHeight;
   },
 };
+Object.assign(Actions, ObActions);
+Object.assign(Submits, ObSubmits);
+Object.assign(Actions, TourActions);
+
 document.addEventListener('submit', (ev) => {
   const f = ev.target; const fn = Submits[f.dataset.submit];
   if (!fn) return;
@@ -397,3 +390,8 @@ document.addEventListener('keydown', (e) => {
   if (!typing && (e.key === '/' || ((e.ctrlKey || e.metaKey) && e.key === 'k')) && !roleOf(parseHash().path).match(/vendor|organizer|admin/)) { e.preventDefault(); openSearch(); }
 });
 render();
+
+// Resume a tour across reloads, otherwise greet first-time visitors.
+const savedTour = JSON.parse(sessionStorage.getItem('popco_tour') || 'null');
+if (!EMBED && savedTour && TOURS[savedTour.id]) { Tour.id = savedTour.id; Tour.i = savedTour.i; Tour.show(); }
+else if (!EMBED && !localStorage.getItem('popco_welcomed')) { localStorage.setItem('popco_welcomed', '1'); setTimeout(openWelcome, 400); }

@@ -10,7 +10,8 @@ Views.vHome = () => {
   const applied = new Set(apps.map((a) => a.eventId));
   const recs = Store.publicEvents().filter((e) => !applied.has(e.id) && e.categories.some((c) => ['Vintage', 'Fashion', 'Handmade', 'Home'].includes(c))).slice(0, 3);
   return dashLayout('vendor', 'home', `
-    <div class="dash-head"><div><p class="eyebrow">Vendor dashboard</p><h1 class="h1">Bonjour, Atelier Nord</h1></div><a href="#/v/discover" class="btn">${ic('search')} Find events</a></div>
+    <div class="dash-head"><div><p class="eyebrow">Vendor dashboard</p><h1 class="h1">Welcome back, Atelier Nord</h1></div><a href="#/v/discover" class="btn">${ic('search')} Find events</a></div>
+    ${gettingStarted('vendor')}
     ${notes.map((n) => `<a href="#/v/group/${n.eventId}" class="notice ${/accepted/.test(n.text) ? 'good' : ''}" data-act="read-notes">${ic('bell')}<span>${esc(n.text)}${/accepted/.test(n.text) ? ' <b>Event group unlocked →</b>' : ''}</span></a>`).join('')}
     <div class="stats">
       <a href="#/v/applications" class="stat"><span>Applications</span><b>${apps.length}</b></a>
@@ -77,7 +78,7 @@ Views.vEvent = (_, id) => {
         <div class="kv"><span>Booth price</span><b>${money(Math.min(...e.booths.filter((b) => !b.addon).map((b) => b.price)))} – ${money(Math.max(...e.booths.map((b) => b.price)))}</b></div>
         <div class="kv"><span>Application deadline</span><b>${fmtDate(e.deadline)}</b></div>
         <div class="kv"><span>Organizer</span><b>${esc(org.org)}</b></div>
-        <div class="kv"><span>Expected visitors</span><b>${(e.views * 0.8).toFixed(0)}+</b></div>
+        <div class="kv"><span>Expected attendance</span><b>${(e.views * 0.8).toFixed(0)}+</b></div>
         ${my ? `<div class="my-status">Your application ${pill(my.status)}</div><a class="btn block" href="#/v/application/${my.id}">View my application</a>
           ${my.status === 'accepted' ? `<a class="btn btn-ghost block" href="#/v/group/${e.id}">${ic('msg')} Open event group</a>` : ''}`
         : e.organizerId === 'pc-team'
@@ -230,6 +231,7 @@ Views.vGroup = (_, eventId) => {
     return dashLayout('vendor', 'groups', `<a href="#/v/groups" class="back">${ic('back')} Event groups</a>
       <div class="locked-big">${ic('lock')}<h2 class="h1">${esc(e.title)} — event group</h2><p class="muted">This space unlocks when the organizer accepts your application.${a ? ` Current status: ${pill(a.status)}` : ''}</p>${a ? `<a class="btn btn-ghost" href="#/v/application/${a.id}">View application</a>` : ''}</div>`);
   }
+  if (!Store.s.done.openedGroup) { Store.s.done.openedGroup = true; localStorage.setItem(STORE_KEY, JSON.stringify(Store.s)); }
   return dashLayout('vendor', 'groups', groupView('vendor', eventId));
 };
 
@@ -244,7 +246,7 @@ Views.vProfile = () => {
   return dashLayout('vendor', 'profile', `
     <div class="dash-head"><div><p class="eyebrow">Reusable profile</p><h1 class="h1">Brand profile</h1><p class="muted">Used to prefill every application. Edit once, apply everywhere.</p></div><a class="btn btn-ghost" href="#/maker/${ME_VENDOR}">View public profile</a></div>
     <form class="panel prof-form" data-submit="save-profile">
-      <div class="prof-top"><img src="${IMG(VENDORS[ME_VENDOR].photo, 200)}" alt=""/><div><b>Atelier Nord</b><span class="muted small">@ateliernord · Montréal, QC</span></div></div>
+      <div class="prof-top"><img src="${IMG(VENDORS[ME_VENDOR].photo, 200)}" alt=""/><div><b>Atelier Nord</b><span class="muted small">@ateliernord · Montreal, QC</span></div></div>
       <label class="field"><span>Business description</span><textarea name="description" rows="3">${esc(p.description)}</textarea></label>
       <div class="two"><label class="field"><span>Product category</span><input name="category" value="${esc(p.category)}"/></label>
       <label class="field"><span>Website / social</span><input name="social" value="${esc(p.social)}"/></label></div>

@@ -168,7 +168,7 @@ function publicHeader(active = '') {
     <a href="#/" class="logo-link">${wordmark()}</a>
     <nav class="pub-nav">
       ${link('#/discover', 'Discover', 'discover')}
-      ${link('#/makers', 'Makers', 'makers')}
+      ${link('#/makers', 'Vendors', 'makers')}
       ${link('#/journal', 'Journal', 'journal')}
       ${link('#/about', 'About', 'about')}
       <span class="nav-sep"></span>
@@ -188,10 +188,10 @@ function publicFooter() {
   return `<footer class="pub-foot">
     <div class="foot-mark">${wordmark('inline', 'xl')}</div>
     <div class="foot-cols">
-      <div><h4>Discover</h4><a href="#/discover">All events</a><a href="#/discover?view=map">Map</a><a href="#/makers">Makers</a><a href="#/saved">Saved</a></div>
+      <div><h4>Discover</h4><a href="#/discover">All events</a><a href="#/discover?view=map">Map</a><a href="#/makers">Vendors</a><a href="#/saved">Saved</a></div>
       <div><h4>Read</h4><a href="#/journal">The journal</a><a href="#/about">About</a><a href="#/about">FAQ</a><a href="#/brand">Brand</a></div>
       <div><h4>Join</h4><a href="#/for-vendors">For vendors</a><a href="#/for-organizers">For organizers</a><a href="#/membership">Membership</a></div>
-      <div><h4>Montréal first</h4><p class="muted">Small brands, big communities. Made with love in Tiohtià:ke / Montréal.</p>
+      <div><h4>Montreal first</h4><p class="muted">Small brands, big communities. Made with love in Montreal.</p>
         <div class="socials"><span>Instagram</span><span>TikTok</span><span>Newsletter</span></div></div>
     </div>
     <p class="tiny muted">Prototype · fictional data · © 2026 POP/COLLECTIVE</p>
@@ -205,7 +205,7 @@ function dashLayout(role, active, content) {
     ['#/v/applications', 'file', 'My Applications', 'applications'],
     ['#/v/groups', 'msg', 'Event Groups', 'groups'],
     ['#/v/saved', 'bookmark', 'Saved', 'saved'],
-    ['#/v/profile', 'store', 'Brand Profile', 'profile'],
+    ['#/v/profile', 'store', 'My Store Profile', 'profile'],
     ['#/membership?tab=vendor', 'card', 'Membership', 'billing'],
   ];
   const orgNav = [
@@ -216,7 +216,7 @@ function dashLayout(role, active, content) {
     ['#/membership?tab=organizer', 'card', 'Membership', 'billing'],
   ];
   const adminNav = [
-    ['#/a', 'home', 'Review & claims', 'home'],
+    ['#/a', 'home', 'Event review', 'home'],
     ['#/a/events', 'list', 'All events', 'events'],
     ['#/discover?view=map', 'map', 'Public map', 'map'],
   ];
@@ -226,16 +226,36 @@ function dashLayout(role, active, content) {
   const unread = role === 'vendor' ? Store.s.notifications.filter((n) => n.to === 'vendor' && !n.read).length : 0;
   const who = role === 'admin' ? { name: 'POP/COLLECTIVE', sub: 'Team · admin', img: PHOTOS.tents }
     : role === 'vendor'
-    ? { name: 'Atelier Nord', sub: 'Vendor · Pro plan', img: VENDORS[ME_VENDOR].photo }
-    : { name: 'Camille Tremblay', sub: 'Montreal Makers Collective', img: PHOTOS.camille };
+    ? { name: 'Atelier Nord', sub: `Vendor · ${Store.s.plans.vendor} plan`, img: VENDORS[ME_VENDOR].photo }
+    : { name: 'Camille Tremblay', sub: `${ORGANIZERS[ME_ORG].org} · ${Store.s.plans.organizer}`, img: PHOTOS.camille };
   return `<div class="dash">
     <aside class="side">
       <a href="#/" class="side-logo">${wordmark('stacked')}</a>
       <nav>${nav.map(([h, i, l, k]) => `<a href="${h}" class="${active === k ? 'on' : ''}">${ic(i)}<span>${l}</span>${(k === 'applications' || (role === 'admin' && k === 'home')) && pend ? `<b class="badge">${pend}</b>` : ''}${k === 'home' && unread ? `<b class="badge">${unread}</b>` : ''}</a>`).join('')}</nav>
       <div class="side-who"><img src="${IMG(who.img, 120)}" alt="" /><div><strong>${who.name}</strong><span>${who.sub}</span></div></div>
     </aside>
-    <main class="dash-main">${content}</main>
+    <main class="dash-main"><div class="dash-top"><span class="muted small">${new Date().toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+      ${role === 'admin' ? '' : `<button class="icon-btn bell" data-act="notifs" data-role="${role}" aria-label="Notifications">${ic('bell')}${notifCount(role) ? `<span class="count">${notifCount(role)}</span>` : ''}</button>`}</div>${content}</main>
   </div>`;
+}
+
+function notifList(role) {
+  if (role === 'vendor') {
+    const own = Store.s.notifications.filter((n) => n.to === 'vendor').map((n) => ({ text: n.text, at: n.at, href: `#/v/group/${n.eventId}`, unread: !n.read }));
+    return [...own,
+      { text: 'Printemps Local is accepting applications — deadline Mar 31, 2027.', at: '2026-10-09T10:00:00Z', href: '#/v/event/printemps' },
+      { text: 'Le Marché des Fêtes: new announcement in the event group.', at: '2026-09-20T09:00:00Z', href: '#/v/group/fetes' }];
+  }
+  const pend = Store.s.applications.filter((a) => a.status === 'pending' && Store.event(a.eventId).organizerId === ME_ORG)
+    .map((a) => ({ text: `New application from ${VENDORS[a.vendorId].name} — ${Store.event(a.eventId).title} (${money(Store.appTotal(a))}).`, at: a.history[0].at, href: `#/o/applications/${a.eventId}?app=${a.id}`, unread: true }));
+  return [...pend, { text: 'Vera Vintage posted in the Mile End Vintage Market group.', at: '2026-10-03T13:10:00Z', href: '#/o/group/mile-end' }];
+}
+const notifCount = (role) => notifList(role).filter((n) => n.unread).length;
+function openNotifs(role) {
+  const list = notifList(role).sort((a, b) => b.at.localeCompare(a.at));
+  modal(`<div class="notifs"><h2 class="h1">${ic('bell')} Notifications</h2>
+    ${list.map((n) => `<a href="${n.href}" data-act="close-modal-nav" class="notif ${n.unread ? 'unread' : ''}"><span class="n-dot"></span><div><p>${esc(n.text)}</p><span class="tiny muted">${fmtStamp(n.at)}</span></div></a>`).join('')}
+  </div>`, 'modal-notifs');
 }
 
 function emptyState(icon, title, text, cta = '') {

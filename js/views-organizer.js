@@ -14,8 +14,9 @@ Views.oHome = () => {
   const pending = apps.filter((a) => a.status === 'pending');
   const pct = st.capacity ? Math.round((st.filled / st.capacity) * 100) : 0;
   return dashLayout('organizer', 'home', `
-    <div class="dash-head"><div><p class="eyebrow">Organizer dashboard</p><h1 class="h1">Bonjour, Camille</h1></div>
+    <div class="dash-head"><div><p class="eyebrow">Organizer dashboard</p><h1 class="h1">Welcome back, Camille</h1></div>
       <div class="row gap"><select data-change="os-event">${pub.map((x) => `<option value="${x.id}" ${x.id === e.id ? 'selected' : ''}>${esc(x.title)}</option>`).join('')}</select><a href="#/o/event/new" class="btn">${ic('plus')} Create event</a></div></div>
+    ${gettingStarted('organizer')}
     <div class="stats">
       <a href="#/o/applications/${e.id}" class="stat"><span>Applications</span><b id="st-total">${st.total}</b></a>
       <a href="#/o/applications/${e.id}?s=pending" class="stat"><span>Pending review</span><b>${st.pending}</b></a>
@@ -37,7 +38,7 @@ Views.oHome = () => {
         <div class="kv"><span>Date</span><b>${fmtDate(e.date)}</b></div>
         <div class="kv"><span>Booths filled</span><b>${st.filled} / ${st.capacity}</b></div>
         <div class="bar"><span style="width:${pct}%"></span></div>
-        <div class="kv"><span>Pending pipeline</span><b>${money(st.pipeline)}</b></div>
+        <div class="kv"><span>Pending applications value</span><b>${money(st.pipeline)}</b></div>
         <div class="kv"><span>Event page views</span><b>${e.views.toLocaleString()}</b></div>
         ${revenueByBooth(e)}
         <div class="row gap"><a class="btn sm btn-ghost" href="#/o/event/${e.id}/edit">${ic('edit')} Edit</a><a class="btn sm btn-ghost" href="#/o/group/${e.id}">${ic('msg')} Event group</a><a class="btn sm btn-ghost" href="#/event/${e.id}">Public page</a></div>
@@ -176,7 +177,7 @@ Views.oWizard = (params, id) => {
       <label class="field"><span>Starts</span><input type="time" data-wz="start" value="${w.start}"/></label>
       <label class="field"><span>Ends</span><input type="time" data-wz="end" value="${w.end}"/></label></div>
       <div class="two"><label class="field"><span>Venue</span><input data-wz="venue" value="${esc(w.venue)}" placeholder="Le Livart"/></label>
-      <label class="field"><span>Address</span><input data-wz="address" value="${esc(w.address)}" placeholder="3980 Rue Saint-Denis, Montréal"/></label></div>
+      <label class="field"><span>Address</span><input data-wz="address" value="${esc(w.address)}" placeholder="3980 Rue Saint-Denis, Montreal"/></label></div>
       <div class="two"><label class="field"><span>Nearest metro</span><input data-wz="metro" value="${esc(w.metro)}" placeholder="Mont-Royal · 8 min walk"/></label>
       <label class="field"><span>Parking</span><input data-wz="parking" value="${esc(w.parking)}" placeholder="Street parking…"/></label></div>
       <div class="field"><span>Categories</span><div class="chips">${CATEGORIES.map((c) => `<button type="button" class="chip ${w.categories.includes(c) ? 'on' : ''}" data-act="wz-cat" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div></div>
@@ -194,13 +195,21 @@ Views.oWizard = (params, id) => {
       <button type="button" class="add-row" data-act="wz-badd">${ic('plus')} Add booth type</button>
       <div class="totals-strip sm"><div><span>Capacity</span><b>${cap} booths</b></div><div class="rev"><span>Max booth revenue (sold out)</span><b>${money(max)}</b></div></div>`;
   } else if (step === 3) {
-    body = `<p class="muted">Every vendor fills the same standardized form — plus up to four questions of your own.</p>
+    const preview = `<aside class="form-preview"><p class="eyebrow">${ic('user')} Vendor view</p><h3>Apply to ${esc(w.title || 'your event')}</h3>
+      <div class="fp-section">Booth selection</div>${w.booths.slice(0, 3).map((b) => `<div class="fp-row"><span>${esc(b.name)}</span><b>${money(b.price)}</b></div>`).join('')}
+      <div class="fp-section">Your brand <span class="prefill">${ic('sparkle')} prefilled</span></div>
+      ${STANDARD_FIELDS.filter((f) => f.locked || w.fields.includes(f.key)).map((f) => `<div class="fp-field"><span>${f.label}</span><i></i></div>`).join('')}
+      ${w.questions.length ? `<div class="fp-section">Questions from the organizer</div>${w.questions.map((q, i) => `<div class="fp-field"><span id="fp-q${i}">${esc(q.label || 'Untitled question')}</span><i></i></div>`).join('')}` : ''}
+      <div class="fp-btn">Submit application</div></aside>`;
+    body = `<div class="wz-form-grid"><div>
+      <p class="muted">Every vendor fills the same standardized form — plus up to four questions of your own.</p>
       <h3>Standard fields</h3>
       <div class="toggles">${STANDARD_FIELDS.map((f) => `<label class="toggle-row"><span>${f.label}${f.locked ? ' <span class="tag">always on</span>' : ''}</span>
         <input type="checkbox" class="switch" data-change="wz-field" data-k="${f.key}" ${w.fields.includes(f.key) || f.locked ? 'checked' : ''} ${f.locked ? 'disabled' : ''}/></label>`).join('')}</div>
       <h3>Custom questions <span class="muted small">(${w.questions.length}/4)</span></h3>
       <div class="q-edit">${w.questions.map((q, i) => `<div class="q-row"><span class="q-n">Q${i + 1}</span><input data-wzq="${i}" value="${esc(q.label)}" placeholder="Your question"/><button type="button" class="icon-btn" data-act="wz-qrm" data-i="${i}">${ic('x')}</button></div>`).join('')}</div>
-      <button type="button" class="add-row" data-act="wz-qadd" ${w.questions.length >= 4 ? 'disabled' : ''}>${ic('plus')} ${w.questions.length >= 4 ? 'Maximum of 4 custom questions' : 'Add custom question'}</button>`;
+      <button type="button" class="add-row" data-act="wz-qadd" ${w.questions.length >= 4 ? 'disabled' : ''}>${ic('plus')} ${w.questions.length >= 4 ? 'Maximum of 4 custom questions' : 'Add custom question'}</button>
+      </div>${preview}</div>`;
   } else {
     const range = w.booths.length ? `${money(Math.min(...w.booths.map((b) => b.price)))} – ${money(Math.max(...w.booths.map((b) => b.price)))}` : '—';
     body = `<div class="review-card">
@@ -211,7 +220,7 @@ Views.oWizard = (params, id) => {
         ${tags(w.categories, 5)}<p class="muted">${esc(w.desc)}</p>
         <div class="kvs"><div><span class="tiny muted">Booth types</span><b>${w.booths.length}</b></div><div><span class="tiny muted">Price range</span><b>${range}</b></div><div><span class="tiny muted">Custom questions</span><b>${w.questions.length}/4</b></div><div><span class="tiny muted">Apply by</span><b><input type="date" data-wz="deadline" value="${w.deadline}"/></b></div></div>
       </div></div>
-      <p class="muted small">${ic('map')} Publishing places this event on the public Montréal map and opens vendor applications.</p>
+      <p class="muted small">${ic('map')} Publishing places this event on the public Montreal map and opens vendor applications.</p>
       <div class="row gap end"><button class="btn btn-ghost" data-act="wz-save" data-s="draft">Save as draft</button><button class="btn" data-act="wz-save" data-s="published">${w.status === 'published' ? 'Update published event' : 'Publish event'}</button></div>`;
   }
   return dashLayout('organizer', 'events', `

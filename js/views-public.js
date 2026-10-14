@@ -15,11 +15,11 @@ Views.home = () => {
       <h1 class="hero-wordmark" aria-label="POP/COLLECTIVE">${logoMark('hero-mark')}<span class="hw-text"><span>POP/</span><span>COLLECTIVE</span></span></h1>
     </div>
     <div class="hero-side">
-      <p class="eyebrow">Montréal · Markets · Pop-ups · Makers</p>
-      <h2 class="display-serif">What's happening<br/><em>in Montréal?</em></h2>
+      <p class="eyebrow">Montreal · Markets · Pop-ups · Independent brands</p>
+      <h2 class="display-serif">What's happening<br/><em>in Montreal?</em></h2>
       <p class="lead">Independent brands, creative communities and the markets that bring them together — all in one place.</p>
       <form class="hero-search" data-submit="hero-search">
-        ${ic('search')}<input name="q" placeholder="Search markets, neighbourhoods, makers…" />
+        ${ic('search')}<input name="q" placeholder="Search events, neighbourhoods, vendors…" />
         <button class="btn">Discover</button>
       </form>
       <div class="quick">
@@ -42,6 +42,7 @@ Views.home = () => {
     </a>
   </section>
 
+  ${forYouRow()}
   <section class="section">
     <div class="sec-head"><h2 class="display">Coming up</h2><a href="#/discover" class="link">View all ${evs.length} events →</a></div>
     <div class="grid-cards">${featured.map((e) => eventCard(e)).join('')}</div>
@@ -63,8 +64,8 @@ Views.home = () => {
     <div class="ed-text">
       <p class="eyebrow">The collective</p>
       <h2 class="display-serif">A cultural guide first.<br/><em>A smart platform second.</em></h2>
-      <p class="lead">POP/COLLECTIVE maps every market, pop-up and maker fair in the city — and gives the people who make them happen the tools to run them.</p>
-      <div class="ed-stats"><div><b>${evs.length}</b><span>upcoming events</span></div><div><b>${Object.keys(VENDORS).length * 9}+</b><span>local makers</span></div><div><b>8</b><span>neighbourhoods</span></div></div>
+      <p class="lead">POP/COLLECTIVE maps every market and pop-up in the city — and gives the people who make them happen the tools to run them.</p>
+      <div class="ed-stats"><div><b>${evs.length}</b><span>upcoming events</span></div><div><b>${Object.keys(VENDORS).length * 9}+</b><span>local vendors</span></div><div><b>8</b><span>neighbourhoods</span></div></div>
       <a href="#/discover?view=map" class="btn">${ic('map')} Explore the map</a>
     </div>
   </section>
@@ -158,7 +159,7 @@ function updateDiscover() {
   const list = filterEvents();
   const res = document.getElementById('disc-results');
   if (!res) return;
-  document.getElementById('disc-count').innerHTML = `<b>${list.length}</b> event${list.length === 1 ? '' : 's'} in Montréal`;
+  document.getElementById('disc-count').innerHTML = `<b>${list.length}</b> event${list.length === 1 ? '' : 's'} in Montreal`;
   res.innerHTML = list.length ? `<div class="grid-cards ${DF.view === 'list' ? 'wide' : ''}">${list.map((e) => eventCard(e, role)).join('')}</div>`
     : emptyState('search', 'No events match', 'Try removing a filter or searching another neighbourhood.', '<button class="btn btn-ghost" data-act="df-clear">Clear filters</button>');
   const map = window.__discMap;
@@ -195,7 +196,7 @@ function showMapCard(e, role) {
 Views.discover = (params) => {
   applyDiscoverParams(params);
   return `${publicHeader('discover')}
-  <section class="page-head"><h1 class="display">Discover</h1><p class="lead">Markets, pop-ups and maker fairs across Montréal — always free to browse.</p></section>
+  <section class="page-head"><h1 class="display">Discover</h1><p class="lead">Discover local pop-ups, markets and events in Montreal — always free to browse.</p></section>
   <section class="section tight">${discoverFilters()}${discoverBody('consumer')}</section>
   ${publicFooter()}`;
 };
@@ -284,18 +285,18 @@ Views.event.mount = (_, id) => {
 /* ---------------- Public vendor (maker) profile ---------------- */
 Views.maker = (_, id) => {
   const v = VENDORS[id];
-  if (!v) return emptyState('user', 'Maker not found', '');
+  if (!v) return emptyState('user', 'Vendor not found', '');
   const isMe = id === ME_VENDOR;
   const p = Store.s.profile;
   const photos = isMe ? p.photos : [v.photo];
   const upcoming = Store.s.applications.filter((a) => a.vendorId === id && a.status === 'accepted').map((a) => Store.event(a.eventId)).filter((e) => e.status === 'published');
   return `${publicHeader()}
   <div class="wrap">
-    <a href="#/makers" class="back">${ic('back')} All makers</a>
+    <a href="#/makers" class="back">${ic('back')} All vendors</a>
     <div class="maker">
       <div class="maker-id">
         <img class="maker-av" src="${IMG(v.photo, 300)}" alt="" />
-        <div><h1 class="display-serif">${esc(v.name)}</h1><p class="muted">${esc(isMe ? p.category : v.category)} · Montréal, QC</p><p class="small">${esc(v.handle)}${v.site ? ' · ' + esc(v.site) : ''}</p></div>
+        <div><h1 class="display-serif">${esc(v.name)}</h1><p class="muted">${esc(isMe ? p.category : v.category)} · Montreal, QC</p><p class="small">${esc(v.handle)}${v.site ? ' · ' + esc(v.site) : ''}</p></div>
         <div class="maker-follow"><span class="muted small"><b>${(id.length * 37) % 900 + 120 + (isFollowing(id) ? 1 : 0)}</b> followers</span>${followBtn(id)}</div>
       </div>
       <div class="maker-body">
@@ -317,13 +318,13 @@ Views.saved = (params) => {
   const evs = Store.s.savedConsumer.map((id) => Store.event(id)).filter(Boolean);
   const mk = (Store.s.followed || []).map((id) => VENDORS[id]).filter(Boolean);
   return `${publicHeader('saved')}
-  <section class="page-head"><h1 class="display">Saved</h1><p class="lead">${u ? `Your markets and makers, ${esc(u.name)}.` : 'Save events and follow makers with a free account.'}</p></section>
+  <section class="page-head"><h1 class="display">Saved</h1><p class="lead">${u ? `Your events and vendors, ${esc(u.name)}.` : 'Save events and follow vendors with a free account.'}</p></section>
   <section class="section tight">
     ${!u ? `<div class="cta-card">${ic('bookmark')}<div><h3>Create a free account to keep your list</h3><p class="muted">Discovery is always free. An account just remembers your favourites.</p></div><button class="btn" data-act="login">Create free account</button></div>` : ''}
-    <div class="tabs"><a href="#/saved" class="${tab === 'events' ? 'on' : ''}">Events (${evs.length})</a><a href="#/saved?tab=makers" class="${tab === 'makers' ? 'on' : ''}">Makers you follow (${mk.length})</a></div>
+    <div class="tabs"><a href="#/saved" class="${tab === 'events' ? 'on' : ''}">Events (${evs.length})</a><a href="#/saved?tab=makers" class="${tab === 'makers' ? 'on' : ''}">Vendors you follow (${mk.length})</a></div>
     ${tab === 'events'
       ? (evs.length ? `<div class="grid-cards">${evs.map((e) => eventCard(e)).join('')}</div>` : emptyState('heart', 'Nothing saved yet', 'Tap the heart on any event to save it here.', '<a class="btn" href="#/discover">Discover events</a>'))
-      : (mk.length ? `<div class="maker-grid">${mk.map(makerCard).join('')}</div>` : emptyState('users', 'Not following anyone yet', 'Follow makers to know where they pop up next.', '<a class="btn" href="#/makers">Browse makers</a>'))}
+      : (mk.length ? `<div class="maker-grid">${mk.map(makerCard).join('')}</div>` : emptyState('users', 'Not following anyone yet', 'Follow vendors to know where they pop up next.', '<a class="btn" href="#/makers">Browse vendors</a>'))}
   </section>
   ${publicFooter()}`;
 };
@@ -361,7 +362,7 @@ Views.membership = (params) => {
   const tab = params?.get('tab') || 'vendor';
   const plans = tab === 'vendor'
     ? [{ n: 'Starter', p: '$XX', f: ['Apply to events', 'Reusable brand profile', 'Application tracking', 'Event groups'] },
-      { n: 'Pro', p: '$XX', pop: true, f: ['Everything in Starter', 'Featured maker profile', 'Early access to curated markets', 'Application insights'] }]
+      { n: 'Pro', p: '$XX', pop: true, f: ['Everything in Starter', 'Featured profile listing', 'Early access to curated markets', 'Application insights'] }]
     : [{ n: 'Basic', p: '$XX', f: ['Up to 3 active events', 'Booth pricing & application form', 'Applicant review', 'Event group'] },
       { n: 'Pro', p: '$XX', pop: true, f: ['Unlimited events', 'Featured on the map', 'Bulk accept & waitlist', 'Revenue estimates & analytics'] }];
   return `${publicHeader()}
@@ -372,10 +373,10 @@ Views.membership = (params) => {
     </div>
   </section>
   <section class="section tight plans">
-    <div class="plan free"><h3>Consumer</h3><p class="price">Free<span> forever</span></p><ul><li>${ic('check')} Browse every event & the map</li><li>${ic('check')} Save favourites</li><li>${ic('check')} Follow makers</li></ul><a class="btn btn-ghost" href="#/discover">Start exploring</a></div>
+    <div class="plan free"><h3>Consumer</h3><p class="price">Free<span> forever</span></p><ul><li>${ic('check')} Browse every event & the map</li><li>${ic('check')} Save favourites</li><li>${ic('check')} Follow vendors</li></ul><a class="btn btn-ghost" href="#/discover">Start exploring</a></div>
     ${plans.map((pl) => `<div class="plan ${pl.pop ? 'pop' : ''}">${pl.pop ? '<span class="pop-tag">Most popular</span>' : ''}<h3>${tab === 'vendor' ? 'Vendor' : 'Organizer'} ${pl.n}</h3><p class="price">${pl.p}<span> / month</span></p>
       <ul>${pl.f.map((f) => `<li>${ic('check')} ${f}</li>`).join('')}</ul>
-      <button class="btn ${pl.pop ? '' : 'btn-ghost'}" data-act="choose-plan" data-plan="${tab} ${pl.n}">Get started</button></div>`).join('')}
+      ${(Store.s.plans[tab] || '').startsWith(pl.n) ? `<span class="current-plan">${ic('check')} Current plan</span>` : `<button class="btn ${pl.pop ? '' : 'btn-ghost'}" data-act="choose-plan" data-plan="${tab} ${pl.n}">${Store.s.accounts[tab] ? 'Switch to ' + pl.n : 'Get started'}</button>`}</div>`).join('')}
   </section>
   <p class="center muted small">No payment is processed in this prototype.</p>
   ${publicFooter()}`;
@@ -385,7 +386,7 @@ Views.membership = (params) => {
 Views.brand = () => {
   const sw = (n, h, light) => `<div class="sw" style="background:${h};color:${light ? '#3D2D2E' : '#FCF8EC'}"><b>${n}</b><span>${h}</span></div>`;
   return `${publicHeader('brand')}
-  <section class="page-head"><p class="eyebrow">Brand / UI direction</p><h1 class="display">Nostalgic in feeling.<br/>Contemporary in function.</h1><p class="lead">The symbol is a map pin carrying a striped market awning — <em>find the next pop-up</em>. It ties together the three sides of the platform: makers under the awning, organizers who raise it, and the people who find it on the map.</p></section>
+  <section class="page-head"><p class="eyebrow">Brand / UI direction</p><h1 class="display">Nostalgic in feeling.<br/>Contemporary in function.</h1><p class="lead">The symbol is a map pin carrying a striped market awning — <em>find the next pop-up</em>. It ties together the three sides of the platform: vendors under the awning, organizers who raise it, and the people who find it on the map.</p></section>
   <section class="section tight">
     <h2 class="h2">Logo treatments</h2>
     <div class="logo-grid">
@@ -409,7 +410,7 @@ Views.brand = () => {
     <h2 class="h2">Typography</h2>
     <div class="type-grid">
       <div><span class="tiny muted">Display · Bricolage Grotesque</span><p class="t-display">Small brands.<br/>Big communities.</p></div>
-      <div><span class="tiny muted">Editorial · Fraunces</span><p class="t-serif">What's happening <em>in Montréal?</em></p></div>
+      <div><span class="tiny muted">Editorial · Fraunces</span><p class="t-serif">What's happening <em>in Montreal?</em></p></div>
       <div><span class="tiny muted">Interface · Inter</span><p class="t-ui">Applications · Booth pricing · Accept · Waitlist · Reject</p><span class="tiny muted">Accent · Caveat</span><p class="scribble static">good people, great events ✶</p></div>
     </div>
 

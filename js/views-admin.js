@@ -1,4 +1,4 @@
-/* POP/COLLECTIVE team (admin) + vendor/organizer onboarding. */
+/* POP/COLLECTIVE team (admin): event database, review queue, listing claims. */
 
 const srcTag = (e) => e.organizerId === 'pc-team'
   ? '<span class="src src-curated">Curated · unclaimed</span>'
@@ -75,66 +75,8 @@ Views.aEvents = (params) => {
     <section class="panel"><div class="table adm-table">
       <div class="tr th"><span>Event</span><span>Date</span><span>City · area</span><span>Source</span><span>Organizer</span><span>Status</span></div>
       ${evs.map((e) => `<a class="tr" href="${e.status === 'published' ? '#/event/' + e.id : '#/a'}"><span class="t-ev"><img src="${IMG(e.img, 100)}" alt=""/><b>${esc(e.title)}</b></span>
-        <span class="muted">${fmtDate(e.date)}</span><span class="muted">Montréal · ${esc(e.neighbourhood)}</span><span>${srcTag(e)}</span>
+        <span class="muted">${fmtDate(e.date)}</span><span class="muted">Montreal · ${esc(e.neighbourhood)}</span><span>${srcTag(e)}</span>
         <span class="small">${esc(ORGANIZERS[e.organizerId].org)}</span><span>${pill(e.status === 'review' ? 'pending' : e.status)}</span></a>`).join('')}
     </div></section>
     <p class="tiny muted">Every event carries a <b>city</b> field — adding Toronto or Vancouver later is a filter, not a schema change.</p>`);
-};
-
-/* ---------------- Onboarding (vendor + organizer) ---------------- */
-const OB = { yearly: false, plan: 'Pro' };
-
-Views.join = (params, kind) => {
-  const v = kind === 'vendor';
-  const step = Number(params?.get('step') || 1);
-  const go = (n) => `#/join/${kind}?step=${n}`;
-  const img = v ? PHOTOS.rackStreet : PHOTOS.festival;
-  const scribble = v ? 'for creative people,<br/>by creative people.' : 'communities,<br/>brands, events —<br/>together ✶';
-  const steps = ['Account', 'Plan', 'Profile', 'Done'];
-  let body = '';
-  if (step === 1) {
-    body = `<h1 class="h1">Create your ${v ? 'vendor' : 'organizer'} account</h1>
-      <p class="muted">${v ? 'Join a community of independent brands and creative entrepreneurs.' : "Let's get your event space on the map."}</p>
-      <form data-submit="ob-next" data-to="${go(2)}">
-        <label class="field"><span>Full name</span><input required value="${v ? 'Inès Laurent' : 'Camille Tremblay'}"/></label>
-        <label class="field"><span>Email address</span><input type="email" required value="${v ? 'hello@ateliernord.ca' : 'camille@mtlmakers.ca'}"/></label>
-        <label class="field"><span>Password</span><input type="password" required value="demo-password"/></label>
-        <button class="btn block">Create account</button>
-      </form><p class="small muted center">Already have an account? <a class="link" href="${v ? '#/v' : '#/o'}">Log in</a></p>`;
-  } else if (step === 2) {
-    const plans = v
-      ? [['Starter', ['Apply to events', 'Track applications', 'Event groups', 'Basic profile']], ['Pro', ['Everything in Starter', 'Priority application alerts', 'Featured maker profile', 'Application insights']]]
-      : [['Basic', ['Up to 3 active events', 'Standard listing', 'Applicant review', 'Event group']], ['Pro', ['Unlimited events', 'Featured on the map', 'Bulk accept & waitlist', 'Revenue estimates']]];
-    body = `<h1 class="h1">Choose your plan</h1><p class="muted">Placeholder pricing — no payment in the prototype.</p>
-      <div class="seg ob-seg"><button class="${OB.yearly ? '' : 'on'}" data-act="ob-yearly" data-y="0">Monthly</button><button class="${OB.yearly ? 'on' : ''}" data-act="ob-yearly" data-y="1">Yearly · save 20%</button></div>
-      <div class="ob-plans">${plans.map(([n, f]) => `<button class="ob-plan ${OB.plan === n ? 'on' : ''}" data-act="ob-plan" data-p="${n}">
-        ${n === 'Pro' ? '<span class="pop-tag">Most popular</span>' : ''}<h3>${n}</h3><p class="price">$XX<span> / ${OB.yearly ? 'year' : 'month'}</span></p>
-        <ul>${f.map((x) => `<li>${ic('check')} ${x}</li>`).join('')}</ul></button>`).join('')}</div>
-      <a class="btn block" href="${go(3)}">Continue with ${OB.plan}</a>`;
-  } else if (step === 3) {
-    body = `<h1 class="h1">Complete your profile</h1><p class="muted">Help ${v ? 'organizers' : 'vendors and visitors'} learn about you.</p>
-      <form data-submit="ob-next" data-to="${go(4)}">
-        <div class="ob-photo"><img src="${IMG(v ? VENDORS[ME_VENDOR].photo : PHOTOS.camille, 200)}" alt=""/><button type="button" class="btn sm btn-ghost" data-act="fake-upload">${ic('upload')} Change photo</button></div>
-        <label class="field"><span>${v ? 'Business name' : 'Organization / venue name'}</span><input value="${v ? 'Atelier Nord' : 'Montreal Makers Collective'}"/></label>
-        <div class="two"><label class="field"><span>${v ? 'Category' : 'Event types'}</span><input value="${v ? 'Vintage clothing' : 'Vintage & maker markets'}"/></label>
-        <label class="field"><span>City</span><select><option>Montréal, QC</option><option disabled>Toronto — coming soon</option><option disabled>Vancouver — coming soon</option></select></label></div>
-        <label class="field"><span>Short description</span><textarea rows="3" maxlength="200" data-act-count>${v ? 'Curated vintage and designer pieces for everyday. Inspired by style, culture and community.' : 'Curated markets celebrating independent Montréal makers.'}</textarea></label>
-        <button class="btn block">Save & continue</button>
-      </form>`;
-  } else {
-    body = `<div class="ob-done"><span class="burst">${ic('check')}</span><h1 class="h1">You're all set!</h1>
-      <p class="muted">Your ${v ? 'vendor profile' : 'organizer account'} is ready. ${v ? 'Your answers will prefill every application.' : 'Create your first event and start receiving applications.'}</p>
-      <a class="btn block" href="${v ? '#/v/discover' : '#/o/event/new'}">${v ? 'Explore events' : 'Create your first event'}</a>
-      <a class="btn btn-ghost block" href="${v ? '#/v' : '#/o'}">Go to dashboard</a>
-      <span class="scribble">${v ? 'small brands,<br/>big communities ✶' : 'good people,<br/>great events ✶'}</span></div>`;
-  }
-  return `<div class="ob">
-    <div class="ob-art film"><img src="${IMG(img, 1400)}" alt=""/><a href="#/" class="ob-logo">${wordmark('stacked')}</a>
-      <span class="scribble light">${scribble}</span>
-      <h2 class="role-title">${v ? 'Turn your passion<br/>into pop-ups.' : 'Create<br/>unforgettable<br/>events.'}</h2></div>
-    <div class="ob-form">
-      <div class="ob-steps">${steps.map((s, i) => `<span class="${step === i + 1 ? 'on' : step > i + 1 ? 'done' : ''}">${step > i + 1 ? ic('check') : i + 1}<em>${s}</em></span>`).join('')}</div>
-      <div class="ob-body">${body}</div>
-    </div>
-  </div>`;
 };
