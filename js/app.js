@@ -55,7 +55,12 @@ function render() {
   for (const [re, fn] of ROUTES) { const m = path.match(re); if (m) { view = fn; arg = m[1]; break; } }
   destroyMaps();
   const y = window.scrollY;
-  document.getElementById('app').innerHTML = view(params, arg);
+  try {
+    document.getElementById('app').innerHTML = view(params, arg);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('app').innerHTML = emptyState('refresh', 'Something went wrong on this screen', 'Reset the demo data to continue.', '<button class="btn" data-act="reset">Reset demo</button>');
+  }
   document.body.dataset.role = roleOf(path);
   if (path !== lastPath) window.scrollTo(0, 0); else window.scrollTo(0, y);
   lastPath = path;

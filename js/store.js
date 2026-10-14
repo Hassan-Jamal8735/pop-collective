@@ -18,7 +18,13 @@ function seedState() {
     profile: clone(SEED_PROFILE),
     notifications: [],
     claims: clone(SEED_CLAIMS),
+    ...stateDefaults(),
   };
+}
+
+// Fields added after the first release: always present after load AND after reset.
+function stateDefaults() {
+  return { followed: [], interested: {}, cityVotes: {}, newsletter: false, plans: { vendor: 'Pro', organizer: 'Pro' }, accounts: {}, orgProfile: null, interests: { cats: [], hoods: [] }, done: {} };
 }
 
 const Store = {
@@ -27,7 +33,7 @@ const Store = {
   load() {
     try { this.s = JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { this.s = null; }
     if (!this.s || !this.s.events) this.s = seedState();
-    this.s = { followed: [], interested: {}, cityVotes: {}, newsletter: false, plans: { vendor: 'Pro', organizer: 'Pro' }, accounts: {}, orgProfile: null, interests: { cats: [], hoods: [] }, done: {}, ...this.s };
+    this.s = { ...stateDefaults(), ...this.s };
     if (this.s.orgProfile) Object.assign(ORGANIZERS[ME_ORG], { org: this.s.orgProfile.name, handle: this.s.orgProfile.instagram || ORGANIZERS[ME_ORG].handle });
   },
   save() {

@@ -154,3 +154,20 @@ html[data-palette="a"] .db-tools .db-main { background: var(--pale); color: var(
 .wl-opt { text-align: left; width: 100%; }
 .ph.add span { position: static; width: auto; height: auto; background: none; display: block; }
 .ob-steps em { line-height: 1.2; }
+
+/* ---------- Tour: paused card + hint ---------- */
+.tour-card.away { top: auto !important; left: auto !important; right: 20px; bottom: 20px; width: 340px; }
+.tour-card.away p { margin-bottom: 14px; }
+.tour-hint { display: block; font-size: 13px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px; }
+@media (max-width: 640px) { .tour-card.away { left: 12px !important; right: 12px; bottom: 12px; width: auto; } }
+
+/* ---------- Themed scrollbars (brand palette) ---------- */
+html { scrollbar-color: var(--brand-soft) var(--cream); scrollbar-width: thin; }
+* { scrollbar-color: var(--brand-soft) transparent; scrollbar-width: thin; }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--brand-soft); border-radius: 99px; border: 3px solid var(--cream); }
+::-webkit-scrollbar-thumb:hover { background: var(--brand); }
+::-webkit-scrollbar-corner { background: var(--cream); }
+.modal ::-webkit-scrollbar-track, .feed-list::-webkit-scrollbar-track, #gs-results::-webkit-scrollbar-track, .hscroll::-webkit-scrollbar-track { background: transparent; }
+.modal ::-webkit-scrollbar-thumb, .feed-list::-webkit-scrollbar-thumb, #gs-results::-webkit-scrollbar-thumb, .hscroll::-webkit-scrollbar-thumb { border-color: var(--card); }

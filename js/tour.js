@@ -8,7 +8,7 @@ const TOURS = {
     title: 'Connected scenario', mins: 2,
     prepare: () => { if (nordApp() && nordApp().status !== 'pending') { Store.reset(); applyPalette(); toast('Demo data reset so the scenario starts fresh'); } },
     steps: [
-      { title: 'The connected scenario', text: () => `<b>Camille</b> (Montreal Makers Collective) runs the <b>Mile End Vintage Market</b> at Le Livart on June 7, 2027.<br/><br/><b>Atelier Nord</b> applied for a 6-foot table + 2 racks = <b>$300</b>. Let's follow what happens when Camille accepts.` },
+      { title: 'The connected scenario', text: () => `<b>Camille</b> (Montreal Makers Collective) runs the <b>Mile End Vintage Market</b> at Le Livart on June 7, 2027.<br/><br/><b>Atelier Nord</b> applied for a 6-foot table + 2 racks = <b>$300</b>. Let's follow what happens when Camille accepts.<br/><br/><span class="tour-hint">This is a guided walkthrough — each <b>Next</b> takes you to the right screen and highlights what to look at.</span>`, nextLabel: 'Start walkthrough' },
       { route: '#/v/application/app-nord-mileend', el: '.dash-head', title: 'Vendor view — Atelier Nord', text: () => `Atelier Nord's application is <b>${STATUS_LABEL[nordApp().status]}</b>. The vendor sees the booth selection and a status timeline.` },
       { route: '#/v/application/app-nord-mileend', el: '.group-teaser', title: 'Event group is locked', text: 'Messages, announcements and shared files unlock only once the organizer accepts the application.' },
       { route: '#/o', el: '.stat.money', title: 'Organizer view — Camille', text: () => `Estimated revenue is <b>${money(mileStats().revenue)}</b>, calculated from accepted booth selections only. No payments are processed.` },
@@ -102,7 +102,7 @@ const Tour = {
   afterRender() { if (this.id) setTimeout(() => this.paint(), 60); },
   paint(attempt = 0) {
     const s = this.step(); if (!s) return;
-    if (s.route && location.hash !== s.route) return;
+    if (s.route && location.hash !== s.route) { this.paintAway(); return; }
     const target = s.el ? document.querySelector(s.el) : null;
     if (s.el && !target && attempt < 15) { clearTimeout(this.timer); this.timer = setTimeout(() => this.paint(attempt + 1), 120); return; }
     let root = document.getElementById('tour');
@@ -120,7 +120,7 @@ const Tour = {
         <div class="tour-nav">
           <div class="tour-dots">${t.steps.map((_, n) => `<i class="${n === this.i ? 'on' : n < this.i ? 'done' : ''}"></i>`).join('')}</div>
           <div class="row gap-s">${this.i > 0 ? '<button class="btn sm btn-ghost" data-act="tour-back">Back</button>' : ''}
-          ${s.end ? '<button class="btn sm" data-act="tour-stop">Finish</button>' : waiting ? '<button class="link-btn" data-act="tour-next">Skip</button>' : '<button class="btn sm" data-act="tour-next">Next</button>'}</div>
+          ${s.end ? '<button class="btn sm" data-act="tour-stop">Finish</button>' : waiting ? '<button class="link-btn" data-act="tour-next">Skip</button>' : `<button class="btn sm" data-act="tour-next">${s.nextLabel || 'Next'}</button>`}</div>
         </div>
       </div>`;
     if (target) {
@@ -130,6 +130,15 @@ const Tour = {
       const loop = () => { if (!document.body.contains(target) || this.step() !== s) return; place(); this.raf = requestAnimationFrame(loop); };
       loop();
     }
+  },
+  paintAway() {
+    const t = TOURS[this.id];
+    let root = document.getElementById('tour');
+    if (!root) { root = document.createElement('div'); root.id = 'tour'; document.body.appendChild(root); }
+    cancelAnimationFrame(this.raf);
+    root.innerHTML = `<div class="tour-card away"><div class="tour-top"><span class="tour-kicker">${esc(t.title)} · paused at ${this.i + 1} of ${t.steps.length}</span><button class="tour-x" data-act="tour-stop" aria-label="End tour">${ic('x')}</button></div>
+      <p>You're exploring on your own. Pick up the walkthrough where you left off whenever you like.</p>
+      <div class="row gap-s end"><button class="btn sm btn-ghost" data-act="tour-stop">End tour</button><button class="btn sm" data-act="tour-resume">Resume tour</button></div></div>`;
   },
   place(target, pref) {
     const spot = document.querySelector('#tour .tour-spot'); const card = document.querySelector('#tour .tour-card');
@@ -227,6 +236,7 @@ const TourActions = {
   'tour-next': () => Tour.go(1),
   'tour-back': () => Tour.go(-1),
   'tour-stop': () => Tour.stop(),
+  'tour-resume': () => Tour.show(),
   'tours-menu': (el) => {
     const open = document.querySelector('.tours-menu');
     if (open) { open.remove(); return; }
@@ -234,7 +244,7 @@ const TourActions = {
     const m = document.createElement('div');
     m.className = 'tours-menu';
     m.style.top = `${r.bottom + 6}px`; m.style.left = `${Math.min(r.left, window.innerWidth - 300)}px`;
-    m.innerHTML = Object.entries(TOURS).map(([k, t]) => `<button data-act="tour-start" data-id="${k}">${ic(k === 'scenario' ? 'play' : 'sparkle')}<div><b>${esc(t.title)}</b><span>${t.mins} min</span></div></button>`).join('')
+    m.innerHTML = Object.entries(TOURS).filter(([k]) => k !== 'scenario').map(([k, t]) => `<button data-act="tour-start" data-id="${k}">${ic(k === 'scenario' ? 'play' : 'sparkle')}<div><b>${esc(t.title)}</b><span>${t.mins} min</span></div></button>`).join('')
       + `<button data-act="welcome">${ic('home')}<div><b>Welcome screen</b><span>Start options</span></div></button>`;
     document.body.appendChild(m);
   },
